@@ -57,7 +57,7 @@ InputError.displayName = 'InputError'
 // Input
 // ---------------------------------------------------------------------------
 
-export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+export interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'prefix' | 'suffix'> {
   /** Node rendered on the left inside the input wrapper */
   prefix?: React.ReactNode
   /** Node rendered on the right inside the input wrapper */

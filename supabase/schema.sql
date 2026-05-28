@@ -91,8 +91,6 @@ create index if not exists idx_clientes_created_at on clientes(created_at desc);
 create index if not exists idx_vendas_created_at    on vendas(created_at desc);
 create index if not exists idx_vendas_produto_id    on vendas(produto_id);
 create index if not exists idx_vendas_cliente_id    on vendas(cliente_id);
-create index if not exists idx_vendas_period        on vendas(date_trunc('month', created_at));
-
 create index if not exists idx_metas_lookup         on metas(tipo, ano, mes);
 create index if not exists idx_historico_period     on historico_mensal(ano, mes);
 

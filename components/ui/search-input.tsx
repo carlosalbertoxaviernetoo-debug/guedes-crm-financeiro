@@ -24,7 +24,7 @@ function useDebounce<T>(value: T, delay: number): T {
 // ---------------------------------------------------------------------------
 
 export interface SearchInputProps
-  extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange' | 'type'> {
+  extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange' | 'type' | 'size'> {
   /** Debounced onChange — fires after `debounceMs` milliseconds of no typing */
   onChange?: (value: string) => void
   /** Immediate onChange without debounce */

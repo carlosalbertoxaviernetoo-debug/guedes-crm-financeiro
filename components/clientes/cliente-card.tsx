@@ -5,7 +5,7 @@ import { motion } from 'framer-motion'
 import {
   Phone,
   MapPin,
-  Instagram,
+  AtSign,
   ShoppingBag,
   Calendar,
   Pencil,
@@ -122,7 +122,7 @@ export function ClienteCard({ cliente, onEdit, onDelete, onWhatsApp }: ClienteCa
             )}
             {cliente.instagram && (
               <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-                <Instagram className="h-3 w-3 shrink-0" />
+                <AtSign className="h-3 w-3 shrink-0" />
                 {cliente.instagram.startsWith('@') ? cliente.instagram : `@${cliente.instagram}`}
               </p>
             )}

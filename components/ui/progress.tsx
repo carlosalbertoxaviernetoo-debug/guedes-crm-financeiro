@@ -48,7 +48,7 @@ const indicatorVariants = cva(
 // ---------------------------------------------------------------------------
 
 export interface ProgressProps
-  extends React.ComponentPropsWithoutRef<typeof ProgressPrimitive.Root>,
+  extends Omit<React.ComponentPropsWithoutRef<typeof ProgressPrimitive.Root>, 'color'>,
     VariantProps<typeof trackVariants>,
     VariantProps<typeof indicatorVariants> {
   /** 0–100 */
@@ -93,7 +93,7 @@ const Progress = React.forwardRef<
       >
         <ProgressPrimitive.Indicator
           className={cn(
-            indicatorVariants({ color }),
+            indicatorVariants({ color: color as ColorKey }),
             indeterminate && 'animate-[progress-indeterminate_1.5s_ease-in-out_infinite] origin-left'
           )}
           style={
@@ -148,7 +148,8 @@ export interface MultiProgressProps {
   showLegend?: boolean
 }
 
-const colorClassMap: Record<NonNullable<ProgressProps['color']>, string> = {
+type ColorKey = 'default' | 'brand' | 'success' | 'warning' | 'destructive' | 'info' | 'purple'
+const colorClassMap: Record<ColorKey, string> = {
   default: 'bg-primary',
   brand: 'bg-brand',
   success: 'bg-brand',
@@ -166,7 +167,7 @@ function MultiProgress({ segments, size = 'md', className, showLegend = false }:
     sm: 'h-1.5',
     md: 'h-2.5',
     lg: 'h-4',
-  }[size]
+  }[size ?? 'md']
 
   return (
     <div className="w-full flex flex-col gap-2">
@@ -188,7 +189,7 @@ function MultiProgress({ segments, size = 'md', className, showLegend = false }:
               key={i}
               className={cn(
                 'h-full transition-all duration-500',
-                colorClassMap[seg.color ?? 'brand'],
+                colorClassMap[(seg.color ?? 'brand') as ColorKey],
                 i > 0 && 'ml-px'
               )}
               style={{ width: `${pct}%` }}
@@ -204,7 +205,7 @@ function MultiProgress({ segments, size = 'md', className, showLegend = false }:
               <span
                 className={cn(
                   'h-2 w-2 rounded-full shrink-0',
-                  colorClassMap[seg.color ?? 'brand']
+                  colorClassMap[(seg.color ?? 'brand') as ColorKey]
                 )}
               />
               {seg.label ?? `Segmento ${i + 1}`}
