@@ -37,9 +37,9 @@ function MiniStat({ label, value, icon: Icon, gold = false }: {
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
         <Icon style={{ width: 11, height: 11, color: gold ? GOLD : 'rgba(255,255,255,0.3)' }} />
-        <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em' }}>{label}</span>
+        <span className="md:text-xs" style={{ color: 'rgba(255,255,255,0.3)', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em' }}>{label}</span>
       </div>
-      <p style={{ color: gold ? GOLD : '#fff', fontWeight: 800, fontSize: 16, margin: 0 }}>{value}</p>
+      <p className="md:text-lg" style={{ color: gold ? GOLD : '#fff', fontWeight: 800, fontSize: 16, margin: 0 }}>{value}</p>
     </div>
   )
 }
@@ -149,7 +149,7 @@ function PeriodoCard({ periodo, index }: { periodo: DashboardPeriodo; index: num
               {/* ── Stats grid ── */}
               <div>
                 <SectionTitle label="Métricas do período" />
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8, marginTop: 8 }}>
+                <div className="md:grid-cols-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8, marginTop: 8 }}>
                   <MiniStat label="Faturamento"   value={formatCurrency(periodo.faturamento_bruto)} icon={DollarSign} gold />
                   <MiniStat label="Lucro Líquido" value={formatCurrency(periodo.lucro_liquido)} icon={TrendingUp} />
                   <MiniStat label="Vendas"        value={periodo.total_vendas.toString()} icon={ShoppingCart} />
@@ -272,13 +272,13 @@ function PeriodoCard({ periodo, index }: { periodo: DashboardPeriodo; index: num
               <div style={{ display: 'flex', flexDirection: 'column', gap: 5, paddingTop: 4, borderTop: '1px solid rgba(255,255,255,0.05)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                   <Clock style={{ width: 11, height: 11, color: 'rgba(255,255,255,0.18)' }} />
-                  <span style={{ color: 'rgba(255,255,255,0.22)', fontSize: 11 }}>
+                  <span className="md:text-sm" style={{ color: 'rgba(255,255,255,0.22)', fontSize: 11 }}>
                     Início: {new Date(ini).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                   </span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                   <Clock style={{ width: 11, height: 11, color: 'rgba(255,255,255,0.18)' }} />
-                  <span style={{ color: 'rgba(255,255,255,0.22)', fontSize: 11 }}>
+                  <span className="md:text-sm" style={{ color: 'rgba(255,255,255,0.22)', fontSize: 11 }}>
                     Encerramento: {new Date(fim).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                   </span>
                 </div>
@@ -360,7 +360,7 @@ export default function HistoricoPage() {
           </p>
         </motion.div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div className="md:max-w-4xl" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           <AnimatePresence>
             {periodos.map((p, i) => (
               <PeriodoCard key={p.id} periodo={p} index={i} />

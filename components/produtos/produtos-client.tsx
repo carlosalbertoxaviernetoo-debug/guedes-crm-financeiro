@@ -144,6 +144,7 @@ export function ProdutosClient({ initialProdutos }: ProdutosClientProps) {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Buscar por nome, categoria..."
+              className="md:text-base"
               style={{
                 width: '100%', height: 40,
                 background: 'rgba(255,255,255,0.04)',
@@ -288,6 +289,7 @@ export function ProdutosClient({ initialProdutos }: ProdutosClientProps) {
       ) : (
         <motion.div
           layout
+          className="md:gap-5"
           style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 16 }}
         >
           <AnimatePresence mode="popLayout">
@@ -317,6 +319,7 @@ export function ProdutosClient({ initialProdutos }: ProdutosClientProps) {
           whileHover={{ scale: 1.06, y: -2 }}
           whileTap={{ scale: 0.94 }}
           onClick={() => { setEditingProd(null); setFormOpen(true) }}
+          className="md:h-11 md:px-6"
           style={{
             display: 'flex', alignItems: 'center', gap: 8,
             height: 48, padding: '0 22px', borderRadius: 24,

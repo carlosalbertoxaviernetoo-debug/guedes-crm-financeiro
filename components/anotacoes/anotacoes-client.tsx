@@ -132,7 +132,7 @@ function AnotacaoCard({
       <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 3, background: cfg.color, borderRadius: '3px 0 0 3px' }} />
 
       {/* Content */}
-      <div style={{ padding: '16px 16px 14px 20px', flex: 1, display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <div className="md:p-5" style={{ padding: '16px 16px 14px 20px', flex: 1, display: 'flex', flexDirection: 'column', gap: 10 }}>
         {/* Top row: type badge + actions */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
           <div style={{
@@ -454,6 +454,7 @@ export function AnotacoesClient({ initialAnotacoes }: AnotacoesClientProps) {
           whileHover={{ scale: 1.04, boxShadow: `0 6px 24px ${GOLD_D}0.3)` }}
           whileTap={{ scale: 0.96 }}
           onClick={openCreate}
+          className="md:h-11"
           style={{
             display: 'flex', alignItems: 'center', gap: 7, padding: '9px 20px', borderRadius: 12,
             background: `linear-gradient(135deg, ${GOLD} 0%, #f5c842 50%, ${GOLD} 100%)`,
@@ -473,6 +474,7 @@ export function AnotacoesClient({ initialAnotacoes }: AnotacoesClientProps) {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Buscar por título ou conteúdo..."
+          className="md:text-base"
           style={{
             width: '100%', height: 40, paddingLeft: 36, paddingRight: 14,
             background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
@@ -482,7 +484,7 @@ export function AnotacoesClient({ initialAnotacoes }: AnotacoesClientProps) {
       </div>
 
       {/* ── Tipo filter chips ───────────────────────────────── */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
+      <div className="md:gap-3 md:flex-wrap" style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
         {/* "Todas" chip */}
         <motion.button
           whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.94 }}
@@ -573,6 +575,7 @@ export function AnotacoesClient({ initialAnotacoes }: AnotacoesClientProps) {
         ) : (
           <motion.div
             key="grid"
+            className="md:grid-cols-2 lg:grid-cols-3 md:gap-4"
             style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12 }}
           >
             <AnimatePresence mode="popLayout">

@@ -126,6 +126,7 @@ export function ClientesClient({ initialClientes }: ClientesClientProps) {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Buscar por nome, telefone, cidade..."
+              className="md:text-base"
               style={{
                 width: '100%', height: 40,
                 background: 'rgba(255,255,255,0.04)',
@@ -244,6 +245,7 @@ export function ClientesClient({ initialClientes }: ClientesClientProps) {
       ) : (
         <motion.div
           layout
+          className="md:gap-5"
           style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 16 }}
         >
           <AnimatePresence mode="popLayout">
@@ -271,6 +273,7 @@ export function ClientesClient({ initialClientes }: ClientesClientProps) {
         <motion.button
           whileHover={{ scale: 1.06, y: -2 }} whileTap={{ scale: 0.94 }}
           onClick={() => { setEditingCliente(null); setFormOpen(true) }}
+          className="md:h-11"
           style={{
             display: 'flex', alignItems: 'center', gap: 8,
             height: 48, padding: '0 22px', borderRadius: 24,

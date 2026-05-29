@@ -87,7 +87,7 @@ function GlassInput({
           max={max}
           required={required}
           inputMode={inputMode}
-          className="w-full py-2.5 px-3 text-sm font-medium bg-transparent outline-none focus-visible:outline-none placeholder:text-gray-600"
+          className="w-full py-2.5 px-3 text-sm md:text-base md:py-3 font-medium bg-transparent outline-none focus-visible:outline-none placeholder:text-gray-600"
           style={{ color: 'rgba(255,255,255,0.9)' }}
         />
       </div>

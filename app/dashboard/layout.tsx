@@ -3,6 +3,8 @@
 import { useState } from 'react'
 import { Sidebar } from '@/components/layout/sidebar'
 import { Header } from '@/components/layout/header'
+import { MobileHeader } from '@/components/layout/mobile-header'
+import { MobileNavbar } from '@/components/layout/mobile-navbar'
 import { cn } from '@/lib/utils'
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -32,11 +34,19 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       {/* Main content */}
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
+        {/* Mobile-only top header */}
+        <MobileHeader />
+
+        {/* Desktop-only header (hidden on mobile via lg:flex inside) */}
         <Header onMenuClick={() => setMobileSidebarOpen(true)} />
-        <main className="flex-1 overflow-y-auto p-4 md:p-6">
+
+        <main className="flex-1 overflow-y-auto p-4 md:p-6 pb-20 lg:pb-6">
           {children}
         </main>
       </div>
+
+      {/* Mobile bottom navigation */}
+      <MobileNavbar />
     </div>
   )
 }

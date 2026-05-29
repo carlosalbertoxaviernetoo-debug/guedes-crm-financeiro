@@ -529,6 +529,7 @@ function ChartCard({ title, sub, children, delay = 0 }: {
       animate={{ opacity: 1, y: 0 }}
       whileHover={{ boxShadow: `0 8px 40px ${GOLD_D}0.07)` }}
       transition={{ duration: 0.35, delay, ease: EASE }}
+      className="md:p-5"
       style={{ borderRadius: 16, background: CARD_BG, border: `1px solid ${CARD_BORDER}`, padding: '20px' }}
     >
       <p style={{ color: '#fff', fontWeight: 800, fontSize: 14, margin: 0 }}>{title}</p>
@@ -592,7 +593,7 @@ export function DashboardClient({ metrics }: DashboardClientProps) {
           <p style={{ color: '#fff', fontWeight: 800, fontSize: 13, margin: 0 }}>Métricas do Período</p>
           <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: 11, margin: '2px 0 0' }}>Resetam com o dashboard</p>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10 }}>
+        <div className="md:gap-4" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10 }}>
           <PeriodCard title="Faturamento Bruto" rawValue={faturamento_bruto} format={formatCurrency}
             sub="Total vendido no período" icon={DollarSign} delay={0} />
           <PeriodCard title="Lucro Líquido" rawValue={lucro_liquido} format={formatCurrency}
@@ -614,7 +615,7 @@ export function DashboardClient({ metrics }: DashboardClientProps) {
           <p style={{ color: '#fff', fontWeight: 800, fontSize: 13, margin: 0 }}>Dados Fixos</p>
           <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: 11, margin: '2px 0 0' }}>Nunca resetam — refletem o estado atual do negócio</p>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+        <div className="md:gap-4" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
           <AlwaysOnCard title="Clientes" rawValue={clientes_cadastrados}
             format={(v) => Math.round(v).toString()}
             sub={`${clientes_recorrentes} recorrentes`} icon={Users} delay={0.24} />
@@ -674,7 +675,7 @@ export function DashboardClient({ metrics }: DashboardClientProps) {
 
       {/* ── Charts ──────────────────────────────────────────── */}
       <ChartCard title="Evolução Financeira" sub="Faturamento e lucro por mês (calendário)" delay={0.4}>
-        <div style={{ height: 200 }}>
+        <div className="md:h-[280px]" style={{ height: 200 }}>
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={evolucao_mensal}>
               <defs>
@@ -701,7 +702,7 @@ export function DashboardClient({ metrics }: DashboardClientProps) {
       <LucroProdutoSection vendas_por_produto={vendas_por_produto} />
 
       <ChartCard title="Vendas Diárias" sub="Últimos 30 dias (calendário)" delay={0.52}>
-        <div style={{ height: 160 }}>
+        <div className="md:h-[200px]" style={{ height: 160 }}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={vendas_por_dia}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />

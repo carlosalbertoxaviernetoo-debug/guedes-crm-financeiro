@@ -263,7 +263,7 @@ function ProgressCard({
         </div>
       </div>
 
-      <div className="relative h-3 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.06)' }}>
+      <div className="relative h-3 md:h-4 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.06)' }}>
         <motion.div
           className="absolute left-0 top-0 h-full rounded-full"
           style={{
@@ -758,7 +758,7 @@ export default function MetasPage() {
           onClick={() => setFormOpen(true)}
           whileHover={{ scale: 1.05, y: -2 }} whileTap={{ scale: 0.95 }}
           transition={{ type: 'spring', stiffness: 400, damping: 20 }}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-black uppercase tracking-wider"
+          className="flex items-center gap-2 px-4 py-2.5 md:h-11 rounded-xl text-sm font-black uppercase tracking-wider"
           style={{
             background: 'linear-gradient(135deg, #d4a017 0%, #f5c842 50%, #d4a017 100%)',
             color: '#080c14',
@@ -1151,7 +1151,7 @@ export default function MetasPage() {
                         Em andamento
                       </p>
                     )}
-                    <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-2 md:gap-4">
                       {activePeriods.map((meta, i) => (
                         <PeriodoCard key={meta.id} meta={meta} index={i} onDeleted={fetchAll} />
                       ))}
@@ -1177,7 +1177,7 @@ export default function MetasPage() {
                           animate={{ opacity: 1, height: 'auto' }}
                           exit={{ opacity: 0, height: 0 }}
                           transition={{ duration: 0.3, ease: EASE }}
-                          className="grid gap-2 sm:grid-cols-2 overflow-hidden"
+                          className="grid gap-2 sm:grid-cols-2 md:grid-cols-2 md:gap-3 overflow-hidden"
                         >
                           {completedPeriods.map((meta, i) => (
                             <RealizedCard

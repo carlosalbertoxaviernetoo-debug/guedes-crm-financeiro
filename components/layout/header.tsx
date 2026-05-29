@@ -26,7 +26,7 @@ export function Header({ onMenuClick }: HeaderProps) {
   const title = PAGE_TITLES[pathname] ?? 'Dashboard'
 
   return (
-    <header className="h-14 flex items-center gap-4 px-4 md:px-6 border-b border-border bg-background/80 backdrop-blur-sm sticky top-0 z-30">
+    <header className="hidden lg:flex h-14 md:h-16 items-center gap-4 px-4 md:px-8 border-b border-border bg-background/80 backdrop-blur-sm sticky top-0 z-30">
       <button
         onClick={onMenuClick}
         className="lg:hidden p-1.5 rounded-md hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
@@ -34,7 +34,7 @@ export function Header({ onMenuClick }: HeaderProps) {
         <Menu className="w-5 h-5" />
       </button>
 
-      <h1 className="text-base font-semibold text-foreground">{title}</h1>
+      <h1 className="text-base md:text-lg font-semibold text-foreground">{title}</h1>
 
       <div className="ml-auto flex items-center gap-2">
         <button

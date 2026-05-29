@@ -2,10 +2,23 @@
 
 import { useTheme } from 'next-themes'
 import { motion, type Variants } from 'framer-motion'
-import { Sun, Moon, Check, Palette } from 'lucide-react'
+import { Sun, Moon, Check, Palette, Smartphone, ChevronUp, ChevronDown, GripVertical } from 'lucide-react'
+import { LayoutDashboard, Package, StickyNote, Users, Target, History, Settings as SettingsIcon } from 'lucide-react'
 import Image from 'next/image'
+import { useMobileNav, ALL_NAV_ITEMS } from '@/lib/hooks/use-mobile-nav'
+import type { NavItemHref } from '@/lib/hooks/use-mobile-nav'
 
 const GOLD = '#d4a017'
+
+const ICON_MAP = {
+  LayoutDashboard,
+  Package,
+  StickyNote,
+  Users,
+  Target,
+  History,
+  Settings: SettingsIcon,
+} as const
 
 // ---------------------------------------------------------------------------
 // Animações
@@ -70,6 +83,44 @@ function ThemePreview({ dark }: { dark: boolean }) {
 }
 
 // ---------------------------------------------------------------------------
+// Toggle switch component
+// ---------------------------------------------------------------------------
+
+function ToggleSwitch({ on, disabled, onClick }: { on: boolean; disabled?: boolean; onClick: () => void }) {
+  return (
+    <div
+      onClick={disabled ? undefined : onClick}
+      style={{
+        width: 36,
+        height: 20,
+        borderRadius: 10,
+        padding: 2,
+        background: on ? GOLD : 'rgba(255,255,255,0.1)',
+        border: `1px solid ${on ? 'rgba(212,160,23,0.5)' : 'rgba(255,255,255,0.1)'}`,
+        cursor: disabled ? 'not-allowed' : 'pointer',
+        opacity: disabled ? 0.4 : 1,
+        display: 'flex',
+        alignItems: 'center',
+        transition: 'background 0.2s, border-color 0.2s',
+        flexShrink: 0,
+      }}
+    >
+      <motion.div
+        animate={{ x: on ? 16 : 0 }}
+        transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+        style={{
+          width: 14,
+          height: 14,
+          borderRadius: '50%',
+          background: on ? '#080c14' : 'rgba(255,255,255,0.4)',
+          boxShadow: on ? '0 1px 4px rgba(0,0,0,0.3)' : 'none',
+        }}
+      />
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
 // Página
 // ---------------------------------------------------------------------------
 
@@ -80,6 +131,25 @@ const THEMES = [
 
 export default function ConfiguracoesPage() {
   const { theme, setTheme } = useTheme()
+  const { selectedHrefs, updateMobileNav } = useMobileNav()
+
+  function toggleItem(href: NavItemHref) {
+    if (selectedHrefs.includes(href)) {
+      updateMobileNav(selectedHrefs.filter(h => h !== href))
+    } else if (selectedHrefs.length < 4) {
+      updateMobileNav([...selectedHrefs, href])
+    }
+  }
+
+  function moveItem(href: NavItemHref, direction: 'up' | 'down') {
+    const idx = selectedHrefs.indexOf(href)
+    if (idx === -1) return
+    const newHrefs = [...selectedHrefs]
+    const swapIdx = direction === 'up' ? idx - 1 : idx + 1
+    if (swapIdx < 0 || swapIdx >= newHrefs.length) return
+    ;[newHrefs[idx], newHrefs[swapIdx]] = [newHrefs[swapIdx], newHrefs[idx]]
+    updateMobileNav(newHrefs)
+  }
 
   return (
     <motion.div
@@ -209,6 +279,225 @@ export default function ConfiguracoesPage() {
               </motion.button>
             )
           })}
+        </div>
+      </motion.div>
+
+      {/* ── Card Layout Mobile ──────────────────────────────── */}
+      <motion.div
+        variants={fadeUp}
+        className="relative rounded-2xl p-6 mt-6"
+        style={{
+          background: 'rgba(255,255,255,0.03)',
+          backdropFilter: 'blur(16px)',
+          border: '1px solid rgba(255,255,255,0.07)',
+          boxShadow: '0 24px 48px rgba(0,0,0,0.4)',
+        }}
+      >
+        {/* Linha dourada topo */}
+        <div
+          className="absolute top-0 left-10 right-10 h-px rounded-full"
+          style={{ background: 'linear-gradient(90deg, transparent, #d4a017, transparent)' }}
+        />
+
+        {/* Título da seção + counter */}
+        <div className="flex items-center gap-3 mb-6">
+          <div
+            className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
+            style={{
+              background: 'rgba(212,160,23,0.1)',
+              border: '1px solid rgba(212,160,23,0.2)',
+            }}
+          >
+            <Smartphone className="w-4 h-4" style={{ color: GOLD }} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h3 className="text-sm font-black text-white uppercase tracking-wider">Layout Mobile</h3>
+            <p className="text-[10px] text-gray-600 uppercase tracking-widest mt-0.5">Barra de navegação inferior</p>
+          </div>
+          {/* Counter badge */}
+          <div
+            className="shrink-0 px-2.5 py-1 rounded-full text-[11px] font-black"
+            style={{
+              background: 'rgba(212,160,23,0.12)',
+              border: '1px solid rgba(212,160,23,0.3)',
+              color: GOLD,
+              letterSpacing: '0.05em',
+            }}
+          >
+            {selectedHrefs.length} / 4
+          </div>
+        </div>
+
+        {/* Nav items list */}
+        <div className="flex flex-col gap-1">
+          {ALL_NAV_ITEMS.map((item) => {
+            const isSelected = selectedHrefs.includes(item.href as NavItemHref)
+            const isDisabled = !isSelected && selectedHrefs.length >= 4
+            const selectedIdx = selectedHrefs.indexOf(item.href as NavItemHref)
+            const Icon = ICON_MAP[item.iconName as keyof typeof ICON_MAP]
+
+            return (
+              <motion.div
+                key={item.href}
+                layout
+                transition={{ type: 'spring', stiffness: 350, damping: 28 }}
+                className="flex items-center gap-3 rounded-xl px-3 py-2.5"
+                style={{
+                  background: isSelected ? 'rgba(212,160,23,0.05)' : 'transparent',
+                  borderLeft: isSelected ? `3px solid ${GOLD}` : '3px solid transparent',
+                  opacity: isDisabled ? 0.38 : 1,
+                  transition: 'background 0.2s, opacity 0.2s',
+                }}
+              >
+                {/* Grip icon (decorative) */}
+                <GripVertical
+                  className="w-3.5 h-3.5 shrink-0"
+                  style={{ color: 'rgba(255,255,255,0.15)' }}
+                />
+
+                {/* Nav icon */}
+                <div
+                  className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
+                  style={{
+                    background: isSelected ? 'rgba(212,160,23,0.1)' : 'rgba(255,255,255,0.04)',
+                    border: `1px solid ${isSelected ? 'rgba(212,160,23,0.25)' : 'rgba(255,255,255,0.06)'}`,
+                  }}
+                >
+                  <Icon
+                    className="w-3.5 h-3.5"
+                    style={{ color: isSelected ? GOLD : 'rgba(255,255,255,0.3)' }}
+                  />
+                </div>
+
+                {/* Label */}
+                <span
+                  className="flex-1 text-sm font-semibold min-w-0"
+                  style={{ color: isSelected ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.35)' }}
+                >
+                  {item.label}
+                </span>
+
+                {/* Up/down reorder buttons — only shown for selected items */}
+                {isSelected && (
+                  <div className="flex items-center gap-0.5 mr-1">
+                    <motion.button
+                      onClick={() => moveItem(item.href as NavItemHref, 'up')}
+                      disabled={selectedIdx === 0}
+                      whileHover={selectedIdx !== 0 ? { scale: 1.15 } : {}}
+                      whileTap={selectedIdx !== 0 ? { scale: 0.88 } : {}}
+                      transition={{ type: 'spring', stiffness: 400, damping: 18 }}
+                      className="w-6 h-6 flex items-center justify-center rounded-md"
+                      style={{
+                        color: selectedIdx === 0 ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.4)',
+                        background: 'rgba(255,255,255,0.04)',
+                        cursor: selectedIdx === 0 ? 'not-allowed' : 'pointer',
+                      }}
+                    >
+                      <ChevronUp className="w-3 h-3" />
+                    </motion.button>
+                    <motion.button
+                      onClick={() => moveItem(item.href as NavItemHref, 'down')}
+                      disabled={selectedIdx === selectedHrefs.length - 1}
+                      whileHover={selectedIdx !== selectedHrefs.length - 1 ? { scale: 1.15 } : {}}
+                      whileTap={selectedIdx !== selectedHrefs.length - 1 ? { scale: 0.88 } : {}}
+                      transition={{ type: 'spring', stiffness: 400, damping: 18 }}
+                      className="w-6 h-6 flex items-center justify-center rounded-md"
+                      style={{
+                        color: selectedIdx === selectedHrefs.length - 1 ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.4)',
+                        background: 'rgba(255,255,255,0.04)',
+                        cursor: selectedIdx === selectedHrefs.length - 1 ? 'not-allowed' : 'pointer',
+                      }}
+                    >
+                      <ChevronDown className="w-3 h-3" />
+                    </motion.button>
+                  </div>
+                )}
+
+                {/* Toggle */}
+                <ToggleSwitch
+                  on={isSelected}
+                  disabled={isDisabled}
+                  onClick={() => toggleItem(item.href as NavItemHref)}
+                />
+              </motion.div>
+            )
+          })}
+        </div>
+
+        {/* Preview bar */}
+        <div className="mt-5 pt-5" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+          <p className="text-[9px] font-bold uppercase tracking-[0.3em] mb-3" style={{ color: 'rgba(212,160,23,0.4)' }}>
+            Pré-visualização
+          </p>
+          <div
+            className="flex items-center justify-around rounded-2xl px-4 py-3"
+            style={{
+              background: 'rgba(8,12,20,0.8)',
+              border: '1px solid rgba(212,160,23,0.1)',
+              boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.03)',
+            }}
+          >
+            {Array.from({ length: 4 }).map((_, i) => {
+              const activeItem = (() => {
+                const orderedItems = ALL_NAV_ITEMS.filter(it =>
+                  selectedHrefs.includes(it.href as NavItemHref)
+                ).sort((a, b) =>
+                  selectedHrefs.indexOf(a.href as NavItemHref) - selectedHrefs.indexOf(b.href as NavItemHref)
+                )
+                return orderedItems[i]
+              })()
+
+              if (!activeItem) {
+                return (
+                  <div
+                    key={i}
+                    className="flex flex-col items-center gap-1.5"
+                    style={{ flex: 1 }}
+                  >
+                    <div
+                      className="w-8 h-8 rounded-full"
+                      style={{ background: 'rgba(255,255,255,0.04)', border: '1px dashed rgba(255,255,255,0.1)' }}
+                    />
+                    <div
+                      className="h-1 rounded-full"
+                      style={{ width: 20, background: 'rgba(255,255,255,0.06)' }}
+                    />
+                  </div>
+                )
+              }
+
+              const PreviewIcon = ICON_MAP[activeItem.iconName as keyof typeof ICON_MAP]
+
+              return (
+                <motion.div
+                  key={activeItem.href}
+                  layout
+                  initial={{ scale: 0.7, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 22 }}
+                  className="flex flex-col items-center gap-1.5"
+                  style={{ flex: 1 }}
+                >
+                  <div
+                    className="w-8 h-8 rounded-full flex items-center justify-center"
+                    style={{
+                      background: 'rgba(212,160,23,0.15)',
+                      border: '1px solid rgba(212,160,23,0.35)',
+                      boxShadow: '0 2px 10px rgba(212,160,23,0.2)',
+                    }}
+                  >
+                    <PreviewIcon className="w-3.5 h-3.5" style={{ color: GOLD }} />
+                  </div>
+                  <span
+                    className="font-black uppercase"
+                    style={{ fontSize: 7, color: 'rgba(212,160,23,0.7)', letterSpacing: '0.08em' }}
+                  >
+                    {activeItem.label}
+                  </span>
+                </motion.div>
+              )
+            })}
+          </div>
         </div>
       </motion.div>
 

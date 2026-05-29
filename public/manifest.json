@@ -1,0 +1,14 @@
+{
+  "name": "Guedes CRM",
+  "short_name": "GuedesCRM",
+  "description": "Sistema financeiro Guedes Outfit",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#080c14",
+  "theme_color": "#d4a017",
+  "orientation": "portrait-primary",
+  "icons": [
+    { "src": "/guedes logo.jpg", "sizes": "192x192", "type": "image/jpeg", "purpose": "any maskable" },
+    { "src": "/guedes logo.jpg", "sizes": "512x512", "type": "image/jpeg", "purpose": "any maskable" }
+  ]
+}
