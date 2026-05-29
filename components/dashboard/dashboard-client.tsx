@@ -3,6 +3,7 @@
 import { useState, useEffect, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
+import Image from 'next/image'
 import {
   AreaChart, Area, BarChart, Bar,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -15,7 +16,7 @@ import {
 import { toast } from 'sonner'
 import { resetDashboard } from '@/lib/actions/periodos'
 import { formatCurrency, formatDate } from '@/lib/utils'
-import type { DashboardMetrics } from '@/types'
+import type { DashboardMetrics, PeriodoProdutoStats } from '@/types'
 
 // ─── Brand tokens ─────────────────────────────────────────────────────────────
 
@@ -274,6 +275,139 @@ function TopClientesSection({ top_clientes, periodo_inicio_em }: {
         </div>
       )}
     </div>
+  )
+}
+
+// ─── Lucro por Produto ────────────────────────────────────────────────────────
+
+function LucroProdutoItem({ item, index }: { item: PeriodoProdutoStats; index: number }) {
+  const animLucro = useCountUp(item.lucro)
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, x: -14 }}
+      animate={{ opacity: 1, x: 0 }}
+      whileHover={{
+        scale: 1.015,
+        boxShadow: '0 6px 22px rgba(34,197,94,0.09), 0 0 0 1px rgba(34,197,94,0.14)',
+        borderColor: 'rgba(34,197,94,0.18)',
+      }}
+      whileTap={{ scale: 0.99 }}
+      transition={{ duration: 0.28, delay: index * 0.05, ease: EASE }}
+      style={{
+        display: 'flex', alignItems: 'center', gap: 12,
+        padding: '11px 14px', borderRadius: 12,
+        background: 'rgba(255,255,255,0.022)',
+        border: '1px solid rgba(255,255,255,0.06)',
+        cursor: 'default',
+      }}
+    >
+      {/* Image / placeholder */}
+      <div style={{
+        width: 42, height: 42, borderRadius: 10,
+        overflow: 'hidden', flexShrink: 0,
+        background: `${GOLD_D}0.06)`,
+        border: `1px solid ${GOLD_D}0.13)`,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        position: 'relative',
+      }}>
+        {item.imagem_url ? (
+          <Image
+            src={item.imagem_url}
+            alt={item.nome}
+            fill
+            sizes="42px"
+            style={{ objectFit: 'cover' }}
+          />
+        ) : (
+          <Package style={{ width: 16, height: 16, color: `${GOLD_D}0.35)` }} />
+        )}
+      </div>
+
+      {/* Name + details */}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <p style={{ color: '#fff', fontWeight: 700, fontSize: 12, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {item.nome}
+        </p>
+        <div style={{ display: 'flex', gap: 10, marginTop: 3, flexWrap: 'wrap' }}>
+          {item.custo != null && (
+            <span style={{ color: 'rgba(255,255,255,0.28)', fontSize: 10 }}>
+              Custo: <span style={{ color: 'rgba(255,255,255,0.55)' }}>{formatCurrency(item.custo)}</span>
+            </span>
+          )}
+          {item.preco_venda != null && (
+            <span style={{ color: 'rgba(255,255,255,0.28)', fontSize: 10 }}>
+              Venda: <span style={{ color: GOLD }}>{formatCurrency(item.preco_venda)}</span>
+            </span>
+          )}
+          <span style={{ color: 'rgba(255,255,255,0.28)', fontSize: 10 }}>
+            {item.quantidade} un. vendida{item.quantidade !== 1 ? 's' : ''}
+          </span>
+        </div>
+      </div>
+
+      {/* Lucro total for this product */}
+      <div style={{ textAlign: 'right', flexShrink: 0 }}>
+        <p style={{ color: '#22c55e', fontWeight: 900, fontSize: 14, margin: 0, letterSpacing: '-0.01em' }}>
+          {formatCurrency(animLucro)}
+        </p>
+        <p style={{ color: 'rgba(34,197,94,0.45)', fontSize: 10, margin: '2px 0 0' }}>lucro</p>
+      </div>
+    </motion.div>
+  )
+}
+
+function LucroProdutoSection({ vendas_por_produto }: { vendas_por_produto: PeriodoProdutoStats[] }) {
+  const lucroTotal = vendas_por_produto.reduce((acc, p) => acc + p.lucro, 0)
+  const animTotal  = useCountUp(lucroTotal)
+
+  if (vendas_por_produto.length === 0) return null
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      whileHover={{ boxShadow: '0 8px 36px rgba(34,197,94,0.06)' }}
+      transition={{ duration: 0.35, delay: 0.44, ease: EASE }}
+      style={{ borderRadius: 16, background: CARD_BG, border: `1px solid ${CARD_BORDER}`, padding: '20px', display: 'flex', flexDirection: 'column', gap: 14 }}
+    >
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ width: 30, height: 30, borderRadius: 9, background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Package style={{ width: 14, height: 14, color: '#22c55e' }} />
+          </div>
+          <div>
+            <p style={{ color: '#fff', fontWeight: 800, fontSize: 14, margin: 0 }}>Lucro por Produto</p>
+            <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: 11, margin: '2px 0 0' }}>
+              Por lucro no período · reseta com o dashboard
+            </p>
+          </div>
+        </div>
+
+        {/* Lucro total chip */}
+        <div style={{ textAlign: 'right', flexShrink: 0 }}>
+          <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.14em', margin: 0 }}>Lucro Total</p>
+          <motion.p
+            key={lucroTotal}
+            initial={{ scale: 0.85, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            style={{ color: '#22c55e', fontWeight: 900, fontSize: 18, margin: '2px 0 0', letterSpacing: '-0.02em' }}
+          >
+            {formatCurrency(animTotal)}
+          </motion.p>
+        </div>
+      </div>
+
+      {/* Product rows */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+        <AnimatePresence>
+          {vendas_por_produto.map((item, i) => (
+            <LucroProdutoItem key={item.nome} item={item} index={i} />
+          ))}
+        </AnimatePresence>
+      </div>
+    </motion.div>
   )
 }
 
@@ -564,21 +698,7 @@ export function DashboardClient({ metrics }: DashboardClientProps) {
         </div>
       </ChartCard>
 
-      {vendas_por_produto.length > 0 && (
-        <ChartCard title="Top Produtos" sub="Por lucro no período" delay={0.46}>
-          <div style={{ height: 200 }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={vendas_por_produto} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" horizontal={false} />
-                <XAxis type="number" tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.3)' }} axisLine={false} tickLine={false} />
-                <YAxis type="category" dataKey="nome" tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.3)' }} axisLine={false} tickLine={false} width={76} />
-                <Tooltip content={<GoldTooltip />} />
-                <Bar dataKey="lucro" name="Lucro" fill={GOLD} radius={[0, 5, 5, 0]} fillOpacity={0.85} animationDuration={1200} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </ChartCard>
-      )}
+      <LucroProdutoSection vendas_por_produto={vendas_por_produto} />
 
       <ChartCard title="Vendas Diárias" sub="Últimos 30 dias (calendário)" delay={0.52}>
         <div style={{ height: 160 }}>

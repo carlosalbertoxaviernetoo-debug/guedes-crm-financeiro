@@ -7,7 +7,7 @@ import {
   getStartOfMonth,
   getEndOfMonth,
 } from '@/lib/utils'
-import type { DashboardMetrics, TopCliente } from '@/types'
+import type { DashboardMetrics, TopCliente, PeriodoProdutoStats } from '@/types'
 import { getProgressoMeta } from './metas'
 import { getCurrentPeriodo } from './periodos'
 
@@ -134,20 +134,28 @@ export async function getDashboardMetrics(): Promise<ActionResult<DashboardMetri
     .sort((a, b) => b[1] - a[1])
     .slice(0, 5)
 
-  let vendas_por_produto: { nome: string; quantidade: number; lucro: number }[] = []
+  let vendas_por_produto: PeriodoProdutoStats[] = []
 
   if (prodLucroArr.length > 0) {
-    const { data: top5Nomes } = await supabase
+    const { data: top5Data } = await supabase
       .from('produtos')
-      .select('id, nome')
+      .select('id, nome, custo, preco_venda, imagem_url')
       .in('id', prodLucroArr.map(([id]) => id))
 
-    const nomeMap = new Map((top5Nomes ?? []).map((p) => [p.id, p.nome]))
-    vendas_por_produto = prodLucroArr.map(([id, luc]) => ({
-      nome: nomeMap.get(id) ?? id,
-      quantidade: prodQtd.get(id) ?? 0,
-      lucro: luc,
-    }))
+    const prodDataMap = new Map(
+      (top5Data ?? []).map((p) => [p.id as string, p as { id: string; nome: string; custo: number; preco_venda: number; imagem_url: string | null }])
+    )
+    vendas_por_produto = prodLucroArr.map(([id, luc]) => {
+      const p = prodDataMap.get(id)
+      return {
+        nome:       p?.nome       ?? id,
+        quantidade: prodQtd.get(id) ?? 0,
+        lucro:      Math.round(luc * 100) / 100,
+        custo:      p?.custo,
+        preco_venda: p?.preco_venda,
+        imagem_url:  p?.imagem_url,
+      }
+    })
   }
 
   // ── 6. Current month metrics (for meta progress) ───────────

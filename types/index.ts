@@ -117,6 +117,15 @@ export interface TopCliente {
   total_compras: number
 }
 
+export interface PeriodoProdutoStats {
+  nome: string
+  quantidade: number
+  lucro: number
+  custo?: number
+  preco_venda?: number
+  imagem_url?: string | null
+}
+
 export interface DashboardPeriodo {
   id: string
   inicio_em: string
@@ -127,6 +136,16 @@ export interface DashboardPeriodo {
   ticket_medio: number
   produtos_vendidos: number
   created_at: string
+  dados_json?: {
+    top_clientes: TopCliente[]
+    vendas_por_produto: PeriodoProdutoStats[]
+    produto_mais_vendido?: string
+    produto_mais_lucrativo?: string
+    clientes_cadastrados: number
+    clientes_recorrentes: number
+    total_investido: number
+    margem: string
+  } | null
 }
 
 export interface DashboardMetrics {
@@ -151,7 +170,7 @@ export interface DashboardMetrics {
   lucro_mes: number
   vendas_mes: number
   vendas_por_dia: { data: string; vendas: number; lucro: number }[]
-  vendas_por_produto: { nome: string; quantidade: number; lucro: number }[]
+  vendas_por_produto: PeriodoProdutoStats[]
   evolucao_mensal: { mes: string; faturamento: number; lucro: number }[]
 }
 

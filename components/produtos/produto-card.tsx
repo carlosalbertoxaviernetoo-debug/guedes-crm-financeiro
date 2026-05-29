@@ -124,50 +124,6 @@ export function ProdutoCard({ produto, onEdit, onVenda, onDeleted }: ProdutoCard
           </div>
         )}
 
-        {/* Quick action overlay on hover */}
-        <AnimatePresence>
-          {hovered && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.15 }}
-              className="absolute inset-0 flex items-center justify-center gap-2"
-              style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }}
-            >
-              <motion.button
-                initial={{ scale: 0.7, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
-                transition={{ delay: 0.05 }}
-                onClick={() => onEdit(produto)}
-                whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
-                className="w-9 h-9 rounded-xl flex items-center justify-center"
-                style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', color: '#fff' }}
-                title="Editar"
-              >
-                <Edit2 className="w-3.5 h-3.5" />
-              </motion.button>
-
-              <motion.button
-                initial={{ scale: 0.7, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
-                transition={{ delay: 0.08 }}
-                onClick={() => !semEstoque && onVenda(produto)}
-                whileHover={semEstoque ? {} : { scale: 1.1 }}
-                whileTap={semEstoque ? {} : { scale: 0.9 }}
-                className="h-9 px-4 rounded-xl flex items-center gap-1.5 text-xs font-black uppercase tracking-wider"
-                style={{
-                  background: semEstoque ? 'rgba(255,255,255,0.06)' : `linear-gradient(135deg, ${GOLD}, #f5c842)`,
-                  color: semEstoque ? 'rgba(255,255,255,0.3)' : '#080c14',
-                  border: semEstoque ? '1px solid rgba(255,255,255,0.1)' : 'none',
-                  cursor: semEstoque ? 'not-allowed' : 'pointer',
-                }}
-                title={semEstoque ? 'Sem estoque' : 'Relatar Venda'}
-              >
-                <ShoppingCart className="w-3.5 h-3.5" />
-                Vender
-              </motion.button>
-            </motion.div>
-          )}
-        </AnimatePresence>
       </div>
 
       {/* Content */}
@@ -228,8 +184,12 @@ export function ProdutoCard({ produto, onEdit, onVenda, onDeleted }: ProdutoCard
         </div>
       </div>
 
-      {/* Footer actions */}
-      <div className="flex gap-2 px-4 pb-4 pt-0">
+      {/* Footer actions — sobe no hover */}
+      <motion.div
+        animate={{ y: hovered ? -8 : 0 }}
+        transition={{ type: 'spring', stiffness: 300, damping: 22 }}
+        className="flex gap-2 px-4 pb-4 pt-0"
+      >
         <motion.button
           onClick={() => !semEstoque && onVenda(produto)}
           whileHover={semEstoque ? {} : { scale: 1.02, y: -1 }}
@@ -283,7 +243,7 @@ export function ProdutoCard({ produto, onEdit, onVenda, onDeleted }: ProdutoCard
             : <Trash2 className="w-3.5 h-3.5" />
           }
         </motion.button>
-      </div>
+      </motion.div>
     </motion.div>
   )
 }
