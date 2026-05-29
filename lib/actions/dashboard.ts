@@ -21,6 +21,8 @@ type ActionResult<T> = { data: T | null; error: string | null }
  */
 export async function getDashboardMetrics(): Promise<ActionResult<DashboardMetrics>> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { data: null, error: 'Não autorizado.' }
 
   const mesAtual = getMesAtual()
   const anoAtual = getAnoAtual()

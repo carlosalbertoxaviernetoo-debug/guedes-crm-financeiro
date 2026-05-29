@@ -9,6 +9,8 @@ type ActionResult<T> = { data: T | null; error: string | null }
 
 export async function getCurrentPeriodo(): Promise<ActionResult<DashboardPeriodo | null>> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { data: null, error: 'Não autorizado.' }
   try {
     const { data, error } = await supabase
       .from('dashboard_periodos')
@@ -31,6 +33,8 @@ export async function getCurrentPeriodo(): Promise<ActionResult<DashboardPeriodo
 
 export async function resetDashboard(): Promise<ActionResult<DashboardPeriodo>> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { data: null, error: 'Não autorizado.' }
   const now = new Date().toISOString()
 
   const { data: current } = await getCurrentPeriodo()
@@ -195,6 +199,8 @@ export async function resetDashboard(): Promise<ActionResult<DashboardPeriodo>> 
 
 export async function getPeriodosHistorico(): Promise<ActionResult<DashboardPeriodo[]>> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { data: [], error: null }
   try {
     const { data, error } = await supabase
       .from('dashboard_periodos')
