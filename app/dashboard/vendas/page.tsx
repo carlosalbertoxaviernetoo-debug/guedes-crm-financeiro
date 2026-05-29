@@ -1,12 +1,6 @@
 import { Suspense } from 'react'
-import {
-  ShoppingCart,
-  DollarSign,
-  TrendingUp,
-  ReceiptText,
-} from 'lucide-react'
 import { getVendas } from '@/lib/actions/vendas'
-import { StatCard } from '@/components/ui/stat-card'
+import { StatsGrid } from '@/components/ui/stats-grid'
 import { VendasPageClient } from '@/components/vendas/vendas-page-client'
 import { formatCurrency } from '@/lib/utils'
 
@@ -62,28 +56,28 @@ async function VendasContent({ mes, ano }: { mes: number; ano: number }) {
     {
       title: 'Vendas no mês',
       value: String(totalVendas),
-      icon: ShoppingCart,
+      iconName: 'shopping-cart' as const,
       iconVariant: 'brand' as const,
       changeLabel: `${mes < 10 ? '0' + mes : mes}/${ano}`,
     },
     {
       title: 'Faturamento',
       value: formatCurrency(faturamento),
-      icon: DollarSign,
+      iconName: 'dollar-sign' as const,
       iconVariant: 'info' as const,
       changeLabel: `${totalVendas} transação${totalVendas !== 1 ? 'ões' : ''}`,
     },
     {
       title: 'Lucro líquido',
       value: formatCurrency(lucro),
-      icon: TrendingUp,
+      iconName: 'trending-up' as const,
       iconVariant: lucro >= 0 ? ('brand' as const) : ('destructive' as const),
       changeLabel: `Margem média: ${margemMedia.toFixed(1)}%`,
     },
     {
       title: 'Ticket médio',
       value: formatCurrency(ticketMedio),
-      icon: ReceiptText,
+      iconName: 'receipt-text' as const,
       iconVariant: 'purple' as const,
       changeLabel: 'por venda',
     },
@@ -92,18 +86,7 @@ async function VendasContent({ mes, ano }: { mes: number; ano: number }) {
   return (
     <>
       {/* Stats row */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {stats.map((s) => (
-          <StatCard
-            key={s.title}
-            title={s.title}
-            value={s.value}
-            icon={s.icon}
-            iconVariant={s.iconVariant}
-            changeLabel={s.changeLabel}
-          />
-        ))}
-      </div>
+      <StatsGrid items={stats} />
 
       {/* Client section (period selector + table + export) */}
       <VendasPageClient initialVendas={vendas} currentMes={mes} currentAno={ano} />

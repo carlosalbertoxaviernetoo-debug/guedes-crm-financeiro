@@ -29,10 +29,10 @@
   --sidebar-border: 220 13% 91%;
   --sidebar-accent: 220 14.3% 95.9%;
 
-  /* Brand colors */
-  --brand: 142 76% 36%;
-  --brand-foreground: 0 0% 100%;
-  --brand-muted: 142 76% 95%;
+  /* Brand colors — Guedes Outfit gold */
+  --brand: 43 79% 45%;
+  --brand-foreground: 220 60% 8%;
+  --brand-muted: 43 79% 92%;
 }
 
 .dark {
@@ -60,9 +60,9 @@
   --sidebar-border: 215 27.9% 12%;
   --sidebar-accent: 215 27.9% 10%;
 
-  --brand: 142 76% 42%;
-  --brand-foreground: 0 0% 100%;
-  --brand-muted: 142 76% 10%;
+  --brand: 43 85% 52%;
+  --brand-foreground: 220 60% 8%;
+  --brand-muted: 43 79% 10%;
 }
 
 @theme inline {

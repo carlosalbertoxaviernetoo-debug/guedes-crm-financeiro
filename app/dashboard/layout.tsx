@@ -12,7 +12,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <div className="flex h-screen overflow-hidden bg-background">
       {/* Desktop sidebar */}
-      <div className="hidden lg:flex shrink-0">
+      <div className="hidden lg:block shrink-0">
         <Sidebar collapsed={collapsed} onCollapse={setCollapsed} />
       </div>
 

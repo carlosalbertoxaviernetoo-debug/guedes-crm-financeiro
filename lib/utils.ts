@@ -87,6 +87,7 @@ export const MESES_NOMES = [
 ]
 
 export const CATEGORIAS_PRODUTO = [
-  'Geral', 'Roupa', 'Calçado', 'Acessório', 'Eletrônico',
-  'Alimento', 'Beleza', 'Casa', 'Esporte', 'Outro'
+  'Camiseta', 'Camisa', 'Calça', 'Bermuda', 'Moletom',
+  'Jaqueta', 'Blusão', 'Tênis', 'Chinelo', 'Boné',
+  'Cinto', 'Meia', 'Cueca', 'Conjunto', 'Acessório', 'Outro',
 ]

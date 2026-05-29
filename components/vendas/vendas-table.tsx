@@ -140,7 +140,7 @@ function VendaRow({
             </div>
             <div className="min-w-0">
               <p className="text-sm font-medium text-foreground truncate max-w-[160px]">
-                {venda.produto?.nome ?? `Produto #${venda.produto_id.slice(0, 6)}`}
+                {venda.produto?.nome ?? (venda.produto_id ? `Produto #${venda.produto_id.slice(0, 6)}` : 'Item manual')}
               </p>
               {venda.produto?.categoria && (
                 <Badge variant="muted" size="sm" className="mt-0.5">

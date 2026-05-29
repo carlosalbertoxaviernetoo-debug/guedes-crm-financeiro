@@ -7,138 +7,110 @@ import {
   getStartOfMonth,
   getEndOfMonth,
 } from '@/lib/utils'
-import type { DashboardMetrics } from '@/types'
+import type { DashboardMetrics, TopCliente } from '@/types'
 import { getProgressoMeta } from './metas'
+import { getCurrentPeriodo } from './periodos'
 
 type ActionResult<T> = { data: T | null; error: string | null }
 
 /**
- * Build the complete dashboard metrics object in one shot.
- * All heavy lifting is done with targeted Supabase queries.
+ * Build the complete dashboard metrics object.
+ * Period-based metrics (faturamento, lucro, vendas, ticket, top produtos/clientes)
+ * are filtered from the current period's inicio_em.
+ * Always-on metrics (clientes, investido, estoque) are never filtered by period.
  */
-export async function getDashboardMetrics(): Promise<
-  ActionResult<DashboardMetrics>
-> {
+export async function getDashboardMetrics(): Promise<ActionResult<DashboardMetrics>> {
   const supabase = await createClient()
 
   const mesAtual = getMesAtual()
   const anoAtual = getAnoAtual()
   const mesStart = getStartOfMonth(mesAtual, anoAtual)
-  const mesEnd = getEndOfMonth(mesAtual, anoAtual)
+  const mesEnd   = getEndOfMonth(mesAtual, anoAtual)
 
-  // ── 1. All-time totals ─────────────────────────────────────
-  const { data: allTimeVendas, error: allTimeError } = await supabase
+  // ── 0. Current period ─────────────────────────────────────
+  const { data: periodo } = await getCurrentPeriodo()
+  // If no period, use epoch (all-time) so all data is included
+  const periodoStart = periodo?.inicio_em ?? new Date(0).toISOString()
+
+  // ── 1. Period totals ──────────────────────────────────────
+  const { data: periodoVendas, error: periodoError } = await supabase
     .from('vendas')
-    .select('valor_total, lucro, quantidade')
+    .select('valor_total, lucro, quantidade, cliente_id, produto_id')
+    .gte('created_at', periodoStart)
 
-  if (allTimeError) return { data: null, error: allTimeError.message }
+  if (periodoError) return { data: null, error: periodoError.message }
 
   let faturamento_bruto = 0
   let lucro_liquido = 0
-  let total_vendas = (allTimeVendas ?? []).length
+  let total_vendas = (periodoVendas ?? []).length
   let produtos_vendidos = 0
 
-  for (const row of allTimeVendas ?? []) {
+  const clienteGasto    = new Map<string, number>()
+  const clienteCompras  = new Map<string, number>()
+  const prodQtd         = new Map<string, number>()
+  const prodLucro       = new Map<string, number>()
+
+  for (const row of periodoVendas ?? []) {
     faturamento_bruto += row.valor_total as number
-    lucro_liquido += row.lucro as number
+    lucro_liquido     += row.lucro as number
     produtos_vendidos += row.quantidade as number
+
+    // For top clientes
+    if (row.cliente_id) {
+      const cid = row.cliente_id as string
+      clienteGasto.set(cid, (clienteGasto.get(cid) ?? 0) + (row.valor_total as number))
+      clienteCompras.set(cid, (clienteCompras.get(cid) ?? 0) + 1)
+    }
+
+    // For top produtos
+    if (row.produto_id) {
+      const pid = row.produto_id as string
+      prodQtd.set(pid, (prodQtd.get(pid) ?? 0) + (row.quantidade as number))
+      prodLucro.set(pid, (prodLucro.get(pid) ?? 0) + (row.lucro as number))
+    }
   }
 
-  // ── 2. Current month metrics ───────────────────────────────
-  const { data: mesVendas, error: mesError } = await supabase
-    .from('vendas')
-    .select('valor_total, lucro, quantidade, created_at')
-    .gte('created_at', mesStart)
-    .lte('created_at', mesEnd)
-
-  if (mesError) return { data: null, error: mesError.message }
-
-  let lucro_mes = 0
-  let vendas_mes = (mesVendas ?? []).length
-
-  for (const row of mesVendas ?? []) {
-    lucro_mes += row.lucro as number
-  }
-
-  // ── 3. Estoque total invested ──────────────────────────────
-  const { data: estoqueProdutos, error: estoqueError } = await supabase
-    .from('produtos')
-    .select('custo, estoque, preco_venda, nome')
-
-  if (estoqueError) return { data: null, error: estoqueError.message }
-
-  let total_investido = 0
-  for (const p of estoqueProdutos ?? []) {
-    total_investido += (p.custo as number) * (p.estoque as number)
-  }
-
-  // ── 4. Ticket médio ────────────────────────────────────────
+  // ── 2. Ticket médio ────────────────────────────────────────
   const ticket_medio =
     total_vendas > 0
       ? Math.round((faturamento_bruto / total_vendas) * 100) / 100
       : 0
 
-  // ── 5. Clientes: total + recorrentes (>1 compra) ───────────
-  const { count: clientes_cadastrados, error: clientesError } = await supabase
-    .from('clientes')
-    .select('id', { count: 'exact', head: true })
+  // ── 3. Top clientes (period) ────────────────────────────────
+  const topClienteEntries = Array.from(clienteGasto.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
 
-  if (clientesError) return { data: null, error: clientesError.message }
+  let top_clientes: TopCliente[] = []
 
-  // Count clients that appear more than once in vendas
-  const { data: clienteVendasRaw, error: clienteVendasError } = await supabase
-    .from('vendas')
-    .select('cliente_id')
-    .not('cliente_id', 'is', null)
+  if (topClienteEntries.length > 0) {
+    const { data: clienteNomes } = await supabase
+      .from('clientes')
+      .select('id, nome')
+      .in('id', topClienteEntries.map(([id]) => id))
 
-  if (clienteVendasError) return { data: null, error: clienteVendasError.message }
-
-  const clienteCount = new Map<string, number>()
-  for (const row of clienteVendasRaw ?? []) {
-    if (row.cliente_id) {
-      clienteCount.set(row.cliente_id, (clienteCount.get(row.cliente_id) ?? 0) + 1)
-    }
-  }
-  let clientes_recorrentes = 0
-  for (const count of clienteCount.values()) {
-    if (count > 1) clientes_recorrentes++
+    const nomeMap = new Map((clienteNomes ?? []).map((c) => [c.id, c.nome]))
+    top_clientes = topClienteEntries.map(([id, gasto]) => ({
+      id,
+      nome: nomeMap.get(id) ?? 'Cliente',
+      total_gasto: Math.round(gasto * 100) / 100,
+      total_compras: clienteCompras.get(id) ?? 1,
+    }))
   }
 
-  // ── 6. Produto mais vendido & mais lucrativo ───────────────
-  const { data: vendaStats, error: vendaStatsError } = await supabase
-    .from('vendas')
-    .select('produto_id, quantidade, lucro')
-
-  if (vendaStatsError) return { data: null, error: vendaStatsError.message }
-
-  const prodQtd = new Map<string, number>()
-  const prodLucro = new Map<string, number>()
-
-  for (const row of vendaStats ?? []) {
-    const pid = row.produto_id as string
-    prodQtd.set(pid, (prodQtd.get(pid) ?? 0) + (row.quantidade as number))
-    prodLucro.set(pid, (prodLucro.get(pid) ?? 0) + (row.lucro as number))
-  }
-
+  // ── 4. Most sold & most profitable product (period) ─────────
   let maisVendidoId: string | null = null
   let maisVendidoQtd = 0
   for (const [pid, qtd] of prodQtd) {
-    if (qtd > maisVendidoQtd) {
-      maisVendidoQtd = qtd
-      maisVendidoId = pid
-    }
+    if (qtd > maisVendidoQtd) { maisVendidoQtd = qtd; maisVendidoId = pid }
   }
 
   let maisLucrativoId: string | null = null
   let maisLucrativoVal = -Infinity
   for (const [pid, luc] of prodLucro) {
-    if (luc > maisLucrativoVal) {
-      maisLucrativoVal = luc
-      maisLucrativoId = pid
-    }
+    if (luc > maisLucrativoVal) { maisLucrativoVal = luc; maisLucrativoId = pid }
   }
 
-  // Resolve product names
   const produtoIdsToFetch = Array.from(
     new Set([maisVendidoId, maisLucrativoId].filter(Boolean) as string[])
   )
@@ -153,11 +125,77 @@ export async function getDashboardMetrics(): Promise<
       .in('id', produtoIdsToFetch)
 
     const nomeMap = new Map((nomesData ?? []).map((p) => [p.id, p.nome]))
-    if (maisVendidoId) produto_mais_vendido = nomeMap.get(maisVendidoId)
-    if (maisLucrativoId) produto_mais_lucrativo = nomeMap.get(maisLucrativoId)
+    if (maisVendidoId)    produto_mais_vendido    = nomeMap.get(maisVendidoId)
+    if (maisLucrativoId)  produto_mais_lucrativo  = nomeMap.get(maisLucrativoId)
   }
 
-  // ── 7. Estoque baixo (estoque <= 5) ───────────────────────
+  // ── 5. Top 5 produtos por lucro (period) ──────────────────
+  const prodLucroArr = Array.from(prodLucro.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+
+  let vendas_por_produto: { nome: string; quantidade: number; lucro: number }[] = []
+
+  if (prodLucroArr.length > 0) {
+    const { data: top5Nomes } = await supabase
+      .from('produtos')
+      .select('id, nome')
+      .in('id', prodLucroArr.map(([id]) => id))
+
+    const nomeMap = new Map((top5Nomes ?? []).map((p) => [p.id, p.nome]))
+    vendas_por_produto = prodLucroArr.map(([id, luc]) => ({
+      nome: nomeMap.get(id) ?? id,
+      quantidade: prodQtd.get(id) ?? 0,
+      lucro: luc,
+    }))
+  }
+
+  // ── 6. Current month metrics (for meta progress) ───────────
+  const { data: mesVendas, error: mesError } = await supabase
+    .from('vendas')
+    .select('valor_total, lucro')
+    .gte('created_at', mesStart)
+    .lte('created_at', mesEnd)
+
+  if (mesError) return { data: null, error: mesError.message }
+
+  let lucro_mes   = 0
+  let vendas_mes  = (mesVendas ?? []).length
+  for (const row of mesVendas ?? []) lucro_mes += row.lucro as number
+
+  // ── 7. Always-on: estoque ─────────────────────────────────
+  const { data: estoqueProdutos, error: estoqueError } = await supabase
+    .from('produtos')
+    .select('custo, estoque')
+
+  if (estoqueError) return { data: null, error: estoqueError.message }
+
+  let total_investido = 0
+  for (const p of estoqueProdutos ?? [])
+    total_investido += (p.custo as number) * (p.estoque as number)
+
+  // ── 8. Always-on: clientes ────────────────────────────────
+  const { count: clientes_cadastrados, error: clientesError } = await supabase
+    .from('clientes')
+    .select('id', { count: 'exact', head: true })
+
+  if (clientesError) return { data: null, error: clientesError.message }
+
+  // Recorrentes: clients with >1 all-time purchase
+  const { data: allClienteVendas } = await supabase
+    .from('vendas')
+    .select('cliente_id')
+    .not('cliente_id', 'is', null)
+
+  const clienteAllCount = new Map<string, number>()
+  for (const row of allClienteVendas ?? []) {
+    if (row.cliente_id)
+      clienteAllCount.set(row.cliente_id, (clienteAllCount.get(row.cliente_id) ?? 0) + 1)
+  }
+  let clientes_recorrentes = 0
+  for (const cnt of clienteAllCount.values()) if (cnt > 1) clientes_recorrentes++
+
+  // ── 9. Always-on: estoque baixo ───────────────────────────
   const { count: estoque_baixo, error: estoqueBaixoError } = await supabase
     .from('produtos')
     .select('id', { count: 'exact', head: true })
@@ -165,7 +203,7 @@ export async function getDashboardMetrics(): Promise<
 
   if (estoqueBaixoError) return { data: null, error: estoqueBaixoError.message }
 
-  // ── 8. Vendas por dia — last 30 days ──────────────────────
+  // ── 10. Vendas por dia — last 30 days (context chart) ─────
   const thirtyDaysAgo = new Date()
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 29)
   thirtyDaysAgo.setHours(0, 0, 0, 0)
@@ -178,55 +216,24 @@ export async function getDashboardMetrics(): Promise<
 
   if (ultimas30Error) return { data: null, error: ultimas30Error.message }
 
-  // Build a map keyed by date string YYYY-MM-DD
   const diaMap = new Map<string, { vendas: number; lucro: number }>()
   for (const row of ultimas30 ?? []) {
     const dia = (row.created_at as string).slice(0, 10)
-    const existing = diaMap.get(dia) ?? { vendas: 0, lucro: 0 }
-    diaMap.set(dia, {
-      vendas: existing.vendas + 1,
-      lucro: existing.lucro + (row.lucro as number),
-    })
+    const ex  = diaMap.get(dia) ?? { vendas: 0, lucro: 0 }
+    diaMap.set(dia, { vendas: ex.vendas + 1, lucro: ex.lucro + (row.lucro as number) })
   }
 
-  // Fill in all 30 days (including zeros)
   const vendas_por_dia: { data: string; vendas: number; lucro: number }[] = []
   for (let i = 0; i < 30; i++) {
     const d = new Date(thirtyDaysAgo)
     d.setDate(d.getDate() + i)
     const key = d.toISOString().slice(0, 10)
     const entry = diaMap.get(key) ?? { vendas: 0, lucro: 0 }
-    vendas_por_dia.push({ data: key, vendas: entry.vendas, lucro: entry.lucro })
+    vendas_por_dia.push({ data: key, ...entry })
   }
 
-  // ── 9. Top 5 produtos por lucro ────────────────────────────
-  const prodLucroArr = Array.from(prodLucro.entries())
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 5)
-
-  const top5Ids = prodLucroArr.map(([id]) => id)
-
-  let vendas_por_produto: { nome: string; quantidade: number; lucro: number }[] =
-    []
-
-  if (top5Ids.length > 0) {
-    const { data: top5Nomes } = await supabase
-      .from('produtos')
-      .select('id, nome')
-      .in('id', top5Ids)
-
-    const nomeMap = new Map((top5Nomes ?? []).map((p) => [p.id, p.nome]))
-
-    vendas_por_produto = prodLucroArr.map(([id, luc]) => ({
-      nome: nomeMap.get(id) ?? id,
-      quantidade: prodQtd.get(id) ?? 0,
-      lucro: luc,
-    }))
-  }
-
-  // ── 10. Evolução dos últimos 6 meses ──────────────────────
-  const evolucao_mensal: { mes: string; faturamento: number; lucro: number }[] =
-    []
+  // ── 11. Evolução financeira — last 6 months ───────────────
+  const evolucao_mensal: { mes: string; faturamento: number; lucro: number }[] = []
 
   for (let i = 5; i >= 0; i--) {
     const d = new Date(anoAtual, mesAtual - 1 - i, 1)
@@ -241,45 +248,44 @@ export async function getDashboardMetrics(): Promise<
       .gte('created_at', s)
       .lte('created_at', e)
 
-    let fat = 0
-    let luc = 0
+    let fat = 0, luc = 0
     for (const row of mRows ?? []) {
       fat += row.valor_total as number
       luc += row.lucro as number
     }
 
-    const nomeMes = d.toLocaleString('pt-BR', { month: 'short' })
     evolucao_mensal.push({
-      mes: `${nomeMes} ${a}`,
+      mes: d.toLocaleString('pt-BR', { month: 'short' }) + ` ${a}`,
       faturamento: Math.round(fat * 100) / 100,
       lucro: Math.round(luc * 100) / 100,
     })
   }
 
-  // ── 11. Meta mensal atual ──────────────────────────────────
-  const { data: progresso, error: progressoError } = await getProgressoMeta(
-    mesAtual,
-    anoAtual
-  )
-
+  // ── 12. Meta mensal ───────────────────────────────────────
+  const { data: progresso, error: progressoError } = await getProgressoMeta(mesAtual, anoAtual)
   if (progressoError) return { data: null, error: progressoError }
 
-  // ── Assemble final metrics object ─────────────────────────
+  // ── Assemble ──────────────────────────────────────────────
   const metrics: DashboardMetrics = {
-    faturamento_bruto: Math.round(faturamento_bruto * 100) / 100,
-    lucro_liquido: Math.round(lucro_liquido * 100) / 100,
+    // Period-based
+    faturamento_bruto:    Math.round(faturamento_bruto * 100) / 100,
+    lucro_liquido:        Math.round(lucro_liquido * 100) / 100,
     total_vendas,
     produtos_vendidos,
-    total_investido: Math.round(total_investido * 100) / 100,
     ticket_medio,
-    clientes_cadastrados: clientes_cadastrados ?? 0,
-    clientes_recorrentes,
     produto_mais_vendido,
     produto_mais_lucrativo,
-    estoque_baixo: estoque_baixo ?? 0,
-    meta_mensal: progresso?.meta ?? undefined,
+    top_clientes,
+    periodo_inicio_em:    periodo?.inicio_em,
+    // Always-on
+    total_investido:      Math.round(total_investido * 100) / 100,
+    clientes_cadastrados: clientes_cadastrados ?? 0,
+    clientes_recorrentes,
+    estoque_baixo:        estoque_baixo ?? 0,
+    // Meta & charts
+    meta_mensal:          progresso?.meta ?? undefined,
     meta_atingida_percent: progresso?.percentual ?? 0,
-    lucro_mes: Math.round(lucro_mes * 100) / 100,
+    lucro_mes:            Math.round(lucro_mes * 100) / 100,
     vendas_mes,
     vendas_por_dia,
     vendas_por_produto,

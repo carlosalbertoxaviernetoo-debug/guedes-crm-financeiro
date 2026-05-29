@@ -1,195 +1,239 @@
 'use client'
 
-import { useState } from 'react'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
-import { toast } from 'sonner'
-import { motion } from 'framer-motion'
-import { Settings, User, Database, Download, Trash2, Shield, Moon, Sun } from 'lucide-react'
 import { useTheme } from 'next-themes'
-import { saveHistoricoMes } from '@/lib/actions/historico'
-import { formatCurrency, getMesAtual, getAnoAtual, MESES_NOMES } from '@/lib/utils'
+import { motion, type Variants } from 'framer-motion'
+import { Sun, Moon, Check, Palette } from 'lucide-react'
+import Image from 'next/image'
 
-const profileSchema = z.object({
-  nome_empresa: z.string().min(1, 'Obrigatório'),
-  email_admin: z.string().email('Email inválido'),
-})
-type ProfileData = z.infer<typeof profileSchema>
+const GOLD = '#d4a017'
+
+// ---------------------------------------------------------------------------
+// Animações
+// ---------------------------------------------------------------------------
+
+const EASE: [number, number, number, number] = [0.22, 1, 0.36, 1]
+
+const container: Variants = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.1, delayChildren: 0.05 } },
+}
+
+const fadeUp: Variants = {
+  hidden: { opacity: 0, y: 22 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: EASE } },
+}
+
+// ---------------------------------------------------------------------------
+// Mini preview do tema
+// ---------------------------------------------------------------------------
+
+function ThemePreview({ dark }: { dark: boolean }) {
+  const bg     = dark ? '#080c14' : '#f0f2f5'
+  const sidebar = dark ? '#0b1120' : '#e2e4e8'
+  const card   = dark ? '#111827' : '#ffffff'
+  const bar1   = dark ? '#d4a017' : '#d4a017'
+  const bar2   = dark ? '#1e2d42' : '#d4d8e0'
+  const text   = dark ? '#1e2d42' : '#d4d8e0'
+
+  return (
+    <div
+      className="w-full h-[68px] rounded-lg overflow-hidden"
+      style={{ background: bg, border: `1px solid ${dark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.08)'}` }}
+    >
+      <div className="flex h-full">
+        {/* Sidebar mini */}
+        <div
+          className="w-9 h-full flex flex-col items-center gap-1.5 pt-2"
+          style={{ background: sidebar }}
+        >
+          <div className="w-5 h-5 rounded-full" style={{ background: bar1, opacity: 0.8 }} />
+          {[0, 1, 2, 3].map(i => (
+            <div key={i} className="w-4 h-1 rounded-full" style={{ background: i === 0 ? bar1 : bar2 }} />
+          ))}
+        </div>
+        {/* Content mini */}
+        <div className="flex-1 p-2 flex flex-col gap-1.5">
+          <div className="w-14 h-1.5 rounded-full" style={{ background: text }} />
+          <div className="grid grid-cols-2 gap-1">
+            {[0, 1, 2, 3].map(i => (
+              <div
+                key={i}
+                className="h-4 rounded-md"
+                style={{ background: card, border: `1px solid ${dark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.06)'}` }}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Página
+// ---------------------------------------------------------------------------
+
+const THEMES = [
+  { id: 'light', label: 'Claro',  desc: 'Modo diurno',   icon: Sun  },
+  { id: 'dark',  label: 'Escuro', desc: 'Modo noturno',  icon: Moon },
+] as const
 
 export default function ConfiguracoesPage() {
   const { theme, setTheme } = useTheme()
-  const [saving, setSaving] = useState(false)
-  const [resetting, setResetting] = useState(false)
-
-  const { register, handleSubmit, formState: { errors } } = useForm<ProfileData>({
-    resolver: zodResolver(profileSchema),
-    defaultValues: {
-      nome_empresa: 'Guedes',
-      email_admin: '',
-    }
-  })
-
-  async function onSaveProfile(data: ProfileData) {
-    setSaving(true)
-    await new Promise(r => setTimeout(r, 600))
-    setSaving(false)
-    toast.success('Configurações salvas com sucesso!')
-  }
-
-  async function handleSaveMonth() {
-    setResetting(true)
-    const mes = getMesAtual()
-    const ano = getAnoAtual()
-    const { error } = await saveHistoricoMes(mes, ano)
-    setResetting(false)
-    if (error) {
-      toast.error('Erro ao salvar histórico do mês')
-      return
-    }
-    toast.success(`Histórico de ${MESES_NOMES[mes - 1]} salvo com sucesso!`)
-  }
-
-  const mesAtual = MESES_NOMES[getMesAtual() - 1]
 
   return (
-    <div className="max-w-2xl space-y-6">
-      <div>
-        <h2 className="text-lg font-semibold text-foreground">Configurações</h2>
-        <p className="text-sm text-muted-foreground">Gerencie as preferências do sistema</p>
-      </div>
-
-      {/* Aparência */}
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="bg-card border border-border rounded-xl p-5"
-      >
-        <div className="flex items-center gap-2 mb-4">
-          <Settings className="w-4 h-4 text-muted-foreground" />
-          <h3 className="text-sm font-medium text-foreground">Aparência</h3>
-        </div>
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm text-foreground">Tema</p>
-            <p className="text-xs text-muted-foreground">Escolha entre claro e escuro</p>
-          </div>
-          <div className="flex items-center gap-2 bg-muted rounded-lg p-1">
-            <button
-              onClick={() => setTheme('light')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
-                theme === 'light'
-                  ? 'bg-background text-foreground shadow-sm'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              <Sun className="w-3 h-3" /> Claro
-            </button>
-            <button
-              onClick={() => setTheme('dark')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
-                theme === 'dark'
-                  ? 'bg-background text-foreground shadow-sm'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              <Moon className="w-3 h-3" /> Escuro
-            </button>
-          </div>
-        </div>
-      </motion.div>
-
-      {/* Perfil */}
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.05 }}
-        className="bg-card border border-border rounded-xl p-5"
-      >
-        <div className="flex items-center gap-2 mb-4">
-          <User className="w-4 h-4 text-muted-foreground" />
-          <h3 className="text-sm font-medium text-foreground">Perfil da Empresa</h3>
-        </div>
-        <form onSubmit={handleSubmit(onSaveProfile)} className="space-y-4">
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium text-muted-foreground">Nome da Empresa</label>
-            <input
-              {...register('nome_empresa')}
-              className="w-full h-9 px-3 text-sm bg-background border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
-              placeholder="Guedes"
-            />
-            {errors.nome_empresa && <p className="text-xs text-destructive">{errors.nome_empresa.message}</p>}
-          </div>
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium text-muted-foreground">Email do Administrador</label>
-            <input
-              {...register('email_admin')}
-              type="email"
-              className="w-full h-9 px-3 text-sm bg-background border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
-              placeholder="admin@exemplo.com"
-            />
-            {errors.email_admin && <p className="text-xs text-destructive">{errors.email_admin.message}</p>}
-          </div>
-          <button
-            type="submit"
-            disabled={saving}
-            className="px-4 py-2 bg-brand hover:bg-brand/90 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
+    <motion.div
+      variants={container}
+      initial="hidden"
+      animate="show"
+      className="max-w-md"
+    >
+      {/* ── Cabeçalho ─────────────────────────────────────── */}
+      <motion.div variants={fadeUp} className="mb-10">
+        <div className="flex items-center gap-3 mb-1">
+          <motion.div
+            animate={{
+              filter: [
+                'drop-shadow(0 0 4px rgba(212,160,23,0.2))',
+                'drop-shadow(0 0 12px rgba(212,160,23,0.6))',
+                'drop-shadow(0 0 4px rgba(212,160,23,0.2))',
+              ],
+            }}
+            transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
           >
-            {saving ? 'Salvando...' : 'Salvar Alterações'}
-          </button>
-        </form>
+            <Image
+              src="/guedes logo.jpg"
+              alt="Guedes Outfit"
+              width={32}
+              height={32}
+              className="rounded-full object-cover"
+            />
+          </motion.div>
+          <div>
+            <h2 className="text-xl font-black text-white uppercase tracking-[0.12em] leading-tight">
+              Configurações
+            </h2>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.3em]" style={{ color: GOLD }}>
+              Preferências do sistema
+            </p>
+          </div>
+        </div>
       </motion.div>
 
-      {/* Histórico mensal */}
+      {/* ── Card Aparência ─────────────────────────────────── */}
       <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-        className="bg-card border border-border rounded-xl p-5"
+        variants={fadeUp}
+        className="relative rounded-2xl p-6"
+        style={{
+          background: 'rgba(255,255,255,0.03)',
+          backdropFilter: 'blur(16px)',
+          border: '1px solid rgba(255,255,255,0.07)',
+          boxShadow: '0 24px 48px rgba(0,0,0,0.4)',
+        }}
       >
-        <div className="flex items-center gap-2 mb-4">
-          <Database className="w-4 h-4 text-muted-foreground" />
-          <h3 className="text-sm font-medium text-foreground">Histórico Mensal</h3>
+        {/* Linha dourada topo */}
+        <div
+          className="absolute top-0 left-10 right-10 h-px rounded-full"
+          style={{ background: 'linear-gradient(90deg, transparent, #d4a017, transparent)' }}
+        />
+
+        {/* Título da seção */}
+        <div className="flex items-center gap-3 mb-6">
+          <div
+            className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
+            style={{
+              background: 'rgba(212,160,23,0.1)',
+              border: '1px solid rgba(212,160,23,0.2)',
+            }}
+          >
+            <Palette className="w-4 h-4" style={{ color: GOLD }} />
+          </div>
+          <div>
+            <h3 className="text-sm font-black text-white uppercase tracking-wider">Aparência</h3>
+            <p className="text-[10px] text-gray-600 uppercase tracking-widest mt-0.5">Tema visual do sistema</p>
+          </div>
         </div>
-        <p className="text-sm text-muted-foreground mb-4">
-          Salve o snapshot financeiro do mês atual no histórico. Isso registra faturamento, lucro, vendas e metas do mês de <strong className="text-foreground">{mesAtual}</strong>.
-        </p>
-        <button
-          onClick={handleSaveMonth}
-          disabled={resetting}
-          className="flex items-center gap-2 px-4 py-2 bg-secondary hover:bg-secondary/80 text-secondary-foreground text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
+
+        {/* Cards de tema */}
+        <div className="grid grid-cols-2 gap-3">
+          {THEMES.map(({ id, label, desc, icon: Icon }) => {
+            const active = theme === id
+
+            return (
+              <motion.button
+                key={id}
+                onClick={() => setTheme(id)}
+                whileHover={{ scale: 1.03, y: -3 }}
+                whileTap={{ scale: 0.97 }}
+                transition={{ type: 'spring', stiffness: 380, damping: 22 }}
+                className="relative flex flex-col gap-3 p-4 rounded-xl cursor-pointer text-left"
+                style={{
+                  background: active ? 'rgba(212,160,23,0.07)' : 'rgba(255,255,255,0.02)',
+                  border: `1px solid ${active ? 'rgba(212,160,23,0.45)' : 'rgba(255,255,255,0.05)'}`,
+                  boxShadow: active ? '0 0 24px rgba(212,160,23,0.1), inset 0 0 20px rgba(212,160,23,0.03)' : 'none',
+                  transition: 'background 0.2s, border-color 0.2s, box-shadow 0.2s',
+                }}
+              >
+                {/* Checkmark ativo */}
+                <motion.div
+                  initial={false}
+                  animate={active ? { scale: 1, opacity: 1 } : { scale: 0, opacity: 0 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 18 }}
+                  className="absolute top-2.5 right-2.5 w-5 h-5 rounded-full flex items-center justify-center"
+                  style={{ background: GOLD }}
+                >
+                  <Check className="w-3 h-3 font-black" style={{ color: '#080c14' }} strokeWidth={3} />
+                </motion.div>
+
+                {/* Preview */}
+                <ThemePreview dark={id === 'dark'} />
+
+                {/* Label */}
+                <div className="flex items-center gap-2">
+                  <motion.div
+                    animate={active ? { color: GOLD } : { color: 'rgb(75,85,99)' }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <Icon className="w-4 h-4 shrink-0" />
+                  </motion.div>
+                  <div>
+                    <p
+                      className="text-sm font-bold leading-tight transition-colors duration-200"
+                      style={{ color: active ? '#ffffff' : 'rgb(107,114,128)' }}
+                    >
+                      {label}
+                    </p>
+                    <p className="text-[10px] text-gray-600 mt-0.5">{desc}</p>
+                  </div>
+                </div>
+              </motion.button>
+            )
+          })}
+        </div>
+      </motion.div>
+
+      {/* ── Versão ────────────────────────────────────────── */}
+      <motion.div variants={fadeUp} className="flex justify-center mt-10">
+        <motion.div
+          whileHover={{ scale: 1.04 }}
+          transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+          className="flex items-center gap-2 px-4 py-2 rounded-full cursor-default"
+          style={{
+            background: 'rgba(255,255,255,0.025)',
+            border: '1px solid rgba(255,255,255,0.05)',
+          }}
         >
-          <Download className="w-4 h-4" />
-          {resetting ? 'Salvando...' : `Salvar histórico de ${mesAtual}`}
-        </button>
+          <motion.div
+            animate={{ opacity: [0.3, 1, 0.3] }}
+            transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
+            className="w-1.5 h-1.5 rounded-full"
+            style={{ background: GOLD }}
+          />
+          <span className="text-[10px] font-semibold uppercase tracking-[0.3em]" style={{ color: 'rgba(255,255,255,0.18)' }}>
+            Guedes CRM &nbsp;·&nbsp; v1.0.0
+          </span>
+        </motion.div>
       </motion.div>
-
-      {/* Info do sistema */}
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.15 }}
-        className="bg-card border border-border rounded-xl p-5"
-      >
-        <div className="flex items-center gap-2 mb-4">
-          <Shield className="w-4 h-4 text-muted-foreground" />
-          <h3 className="text-sm font-medium text-foreground">Sistema</h3>
-        </div>
-        <div className="space-y-2 text-sm">
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Versão</span>
-            <span className="text-foreground font-medium">1.0.0</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Stack</span>
-            <span className="text-foreground font-medium">Next.js 16 + Supabase</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Ambiente</span>
-            <span className="text-brand font-medium">Produção</span>
-          </div>
-        </div>
-      </motion.div>
-    </div>
+    </motion.div>
   )
 }

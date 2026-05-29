@@ -151,3 +151,32 @@ export async function getProdutosComStats(): Promise<
 
   return { data: result, error: null }
 }
+
+/**
+ * Upload a product image to Supabase Storage.
+ * Accepts a FormData with a 'file' field.
+ */
+export async function uploadProdutoImagem(
+  formData: FormData
+): Promise<{ url: string | null; error: string | null }> {
+  const supabase = await createClient()
+  const file = formData.get('file') as File | null
+
+  if (!file || file.size === 0) return { url: null, error: 'Nenhum arquivo selecionado.' }
+  if (file.size > 5 * 1024 * 1024) return { url: null, error: 'Imagem muito grande (máx 5 MB).' }
+
+  const ext  = file.name.split('.').pop()?.toLowerCase() ?? 'jpg'
+  const path = `produtos/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+
+  const { data, error } = await supabase.storage
+    .from('produto-imagens')
+    .upload(path, file, { contentType: file.type, upsert: false })
+
+  if (error) return { url: null, error: error.message }
+
+  const { data: urlData } = supabase.storage
+    .from('produto-imagens')
+    .getPublicUrl(data.path)
+
+  return { url: urlData.publicUrl, error: null }
+}

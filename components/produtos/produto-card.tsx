@@ -1,16 +1,16 @@
 'use client'
 
 import { useState } from 'react'
-import { motion } from 'framer-motion'
-import { Edit2, Trash2, ShoppingCart, Package, TrendingUp, AlertTriangle } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Edit2, Trash2, ShoppingCart, Package, TrendingUp, AlertTriangle, Plus } from 'lucide-react'
 import { toast } from 'sonner'
 import Image from 'next/image'
-import { Card, CardContent, CardFooter } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { formatCurrency, formatPercent, calcMargem, calcLucroUnitario } from '@/lib/utils'
+import { formatCurrency, calcMargem, calcLucroUnitario } from '@/lib/utils'
 import { deleteProduto } from '@/lib/actions/produtos'
 import type { Produto } from '@/types'
+
+const GOLD   = '#d4a017'
+const GOLD_D = 'rgba(212,160,23,'
 
 interface ProdutoCardProps {
   produto: Produto & { total_vendido?: number; lucro_total?: number }
@@ -19,196 +19,271 @@ interface ProdutoCardProps {
   onDeleted: (id: string) => void
 }
 
-function StockBadge({ estoque }: { estoque: number }) {
-  if (estoque === 0) {
-    return (
-      <Badge variant="destructive" dot>
-        Sem estoque
-      </Badge>
-    )
-  }
-  if (estoque <= 5) {
-    return (
-      <Badge variant="warning" dot>
-        {estoque} un. (baixo)
-      </Badge>
-    )
-  }
-  return (
-    <Badge variant="success" dot>
-      {estoque} un.
-    </Badge>
-  )
-}
-
-function getCategoryBadgeVariant(categoria?: string | null) {
-  const map: Record<string, 'blue' | 'purple' | 'orange' | 'muted'> = {
-    Roupa: 'blue',
-    Calçado: 'purple',
-    Acessório: 'orange',
-    Eletrônico: 'blue',
-  }
-  return (categoria && map[categoria]) || 'muted'
-}
-
 export function ProdutoCard({ produto, onEdit, onVenda, onDeleted }: ProdutoCardProps) {
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [hovered, setHovered] = useState(false)
 
-  const margem = calcMargem(produto.custo, produto.preco_venda)
-  const lucro = calcLucroUnitario(produto.custo, produto.preco_venda)
+  const margem   = calcMargem(produto.custo, produto.preco_venda)
+  const lucroU   = calcLucroUnitario(produto.custo, produto.preco_venda)
+  const semEstoque = produto.estoque === 0
+  const baixo      = produto.estoque > 0 && produto.estoque <= 5
+
+  const margemColor = margem >= 30 ? GOLD : margem >= 15 ? '#f59e0b' : '#ef4444'
 
   async function handleDelete() {
     if (!confirmDelete) {
       setConfirmDelete(true)
-      // Auto-cancel confirmation after 3s
       setTimeout(() => setConfirmDelete(false), 3000)
       return
     }
     setDeleting(true)
     const { error } = await deleteProduto(produto.id)
     setDeleting(false)
-    if (error) {
-      toast.error(error)
-    } else {
-      toast.success('Produto excluído com sucesso')
-      onDeleted(produto.id)
-    }
+    if (error) { toast.error(error); return }
+    toast.success('Produto excluído.')
+    onDeleted(produto.id)
     setConfirmDelete(false)
   }
 
   return (
     <motion.div
       layout
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.95 }}
-      transition={{ duration: 0.2, ease: 'easeOut' }}
-      whileHover={{ y: -2 }}
+      initial={{ opacity: 0, y: 20, scale: 0.96 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.18 } }}
+      whileHover={{ y: -6 }}
+      transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+      onHoverStart={() => setHovered(true)}
+      onHoverEnd={() => setHovered(false)}
+      className="relative flex flex-col rounded-2xl overflow-hidden cursor-default"
+      style={{
+        background: 'linear-gradient(145deg, rgba(13,24,41,0.95) 0%, rgba(8,12,20,0.98) 100%)',
+        border: hovered ? `1px solid ${GOLD_D}0.3)` : '1px solid rgba(255,255,255,0.07)',
+        boxShadow: hovered
+          ? `0 20px 50px rgba(0,0,0,0.6), 0 0 0 1px ${GOLD_D}0.08)`
+          : '0 4px 16px rgba(0,0,0,0.4)',
+        transition: 'border-color 0.2s, box-shadow 0.2s',
+      }}
     >
-      <Card className="flex flex-col h-full overflow-hidden border-border hover:border-border/60 hover:shadow-lg transition-all duration-200">
-        {/* Product image */}
-        <div className="relative h-44 bg-muted shrink-0 overflow-hidden">
-          {produto.imagem_url ? (
-            <Image
-              src={produto.imagem_url}
-              alt={produto.nome}
-              fill
-              className="object-cover"
-              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-            />
-          ) : (
-            <div className="flex flex-col items-center justify-center h-full gap-2 text-muted-foreground/40">
-              <Package className="w-12 h-12" />
-              <span className="text-xs">Sem imagem</span>
-            </div>
+      {/* Top gold shimmer on hover */}
+      <AnimatePresence>
+        {hovered && (
+          <motion.div
+            initial={{ scaleX: 0, opacity: 0 }}
+            animate={{ scaleX: 1, opacity: 1 }}
+            exit={{ scaleX: 0, opacity: 0 }}
+            transition={{ duration: 0.25 }}
+            className="absolute top-0 left-6 right-6 h-px origin-left"
+            style={{ background: `linear-gradient(90deg, transparent, ${GOLD}, transparent)` }}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Image area */}
+      <div className="relative h-44 shrink-0 overflow-hidden"
+        style={{ background: 'rgba(255,255,255,0.03)' }}>
+        {produto.imagem_url ? (
+          <Image
+            src={produto.imagem_url}
+            alt={produto.nome}
+            fill
+            className="object-cover transition-transform duration-500"
+            style={{ transform: hovered ? 'scale(1.06)' : 'scale(1)' }}
+            sizes="(max-width: 640px) 100vw, 33vw"
+          />
+        ) : (
+          <div className="flex flex-col items-center justify-center h-full gap-2">
+            <Package className="w-10 h-10" style={{ color: GOLD_D + '0.25)' }} />
+          </div>
+        )}
+
+        {/* Stock overlay */}
+        <AnimatePresence>
+          {(semEstoque || baixo) && (
+            <motion.div
+              initial={{ opacity: 0, x: 8 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="absolute top-2 right-2 flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider"
+              style={semEstoque
+                ? { background: 'rgba(239,68,68,0.9)', color: '#fff' }
+                : { background: 'rgba(245,158,11,0.9)', color: '#000' }
+              }
+            >
+              <AlertTriangle className="w-2.5 h-2.5" />
+              {semEstoque ? 'Esgotado' : `${produto.estoque} restantes`}
+            </motion.div>
           )}
-          {/* Stock overlay badge */}
-          {produto.estoque <= 5 && (
-            <div className="absolute top-2 right-2">
-              <span
-                className={[
-                  'flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold shadow',
-                  produto.estoque === 0
-                    ? 'bg-destructive text-destructive-foreground'
-                    : 'bg-yellow-500 text-white',
-                ].join(' ')}
+        </AnimatePresence>
+
+        {/* Category pill */}
+        {produto.categoria && (
+          <div className="absolute bottom-2 left-2 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider"
+            style={{ background: GOLD_D + '0.85)', color: '#080c14', backdropFilter: 'blur(8px)' }}>
+            {produto.categoria}
+          </div>
+        )}
+
+        {/* Quick action overlay on hover */}
+        <AnimatePresence>
+          {hovered && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15 }}
+              className="absolute inset-0 flex items-center justify-center gap-2"
+              style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }}
+            >
+              <motion.button
+                initial={{ scale: 0.7, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+                transition={{ delay: 0.05 }}
+                onClick={() => onEdit(produto)}
+                whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
+                className="w-9 h-9 rounded-xl flex items-center justify-center"
+                style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', color: '#fff' }}
+                title="Editar"
               >
-                <AlertTriangle className="w-3 h-3" />
-                {produto.estoque === 0 ? 'Esgotado' : `${produto.estoque} restantes`}
-              </span>
-            </div>
+                <Edit2 className="w-3.5 h-3.5" />
+              </motion.button>
+
+              <motion.button
+                initial={{ scale: 0.7, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+                transition={{ delay: 0.08 }}
+                onClick={() => !semEstoque && onVenda(produto)}
+                whileHover={semEstoque ? {} : { scale: 1.1 }}
+                whileTap={semEstoque ? {} : { scale: 0.9 }}
+                className="h-9 px-4 rounded-xl flex items-center gap-1.5 text-xs font-black uppercase tracking-wider"
+                style={{
+                  background: semEstoque ? 'rgba(255,255,255,0.06)' : `linear-gradient(135deg, ${GOLD}, #f5c842)`,
+                  color: semEstoque ? 'rgba(255,255,255,0.3)' : '#080c14',
+                  border: semEstoque ? '1px solid rgba(255,255,255,0.1)' : 'none',
+                  cursor: semEstoque ? 'not-allowed' : 'pointer',
+                }}
+                title={semEstoque ? 'Sem estoque' : 'Relatar Venda'}
+              >
+                <ShoppingCart className="w-3.5 h-3.5" />
+                Vender
+              </motion.button>
+            </motion.div>
           )}
+        </AnimatePresence>
+      </div>
+
+      {/* Content */}
+      <div className="flex flex-col gap-3 p-4 flex-1">
+        {/* Name */}
+        <h3 className="text-sm font-black text-white leading-tight line-clamp-2 tracking-wide">
+          {produto.nome}
+        </h3>
+
+        {/* Price grid */}
+        <div className="grid grid-cols-2 gap-2">
+          <div className="rounded-xl p-2.5"
+            style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)' }}>
+            <p className="text-[9px] font-bold uppercase tracking-[0.2em] mb-0.5"
+              style={{ color: 'rgba(255,255,255,0.35)' }}>Custo</p>
+            <p className="text-xs font-bold text-white">{formatCurrency(produto.custo)}</p>
+          </div>
+          <div className="rounded-xl p-2.5"
+            style={{ background: GOLD_D + '0.07)', border: `1px solid ${GOLD_D}0.15)` }}>
+            <p className="text-[9px] font-bold uppercase tracking-[0.2em] mb-0.5"
+              style={{ color: GOLD_D + '0.7)' }}>Venda</p>
+            <p className="text-xs font-black" style={{ color: GOLD }}>{formatCurrency(produto.preco_venda)}</p>
+          </div>
         </div>
 
-        <CardContent className="flex flex-col gap-3 flex-1 pt-4">
-          {/* Name + category */}
-          <div className="flex items-start justify-between gap-2">
-            <h3 className="font-semibold text-sm text-foreground leading-tight line-clamp-2 flex-1">
-              {produto.nome}
-            </h3>
-            {produto.categoria && (
-              <Badge variant={getCategoryBadgeVariant(produto.categoria)} size="sm" className="shrink-0">
-                {produto.categoria}
-              </Badge>
-            )}
+        {/* Margin + profit */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-1">
+            <TrendingUp className="w-3 h-3" style={{ color: margemColor }} />
+            <span className="text-[10px] font-bold" style={{ color: 'rgba(255,255,255,0.4)' }}>
+              Lucro: <span className="text-white">{formatCurrency(lucroU)}</span>
+            </span>
           </div>
-
-          {/* Pricing grid */}
-          <div className="grid grid-cols-2 gap-2">
-            <div className="bg-muted/60 rounded-lg p-2.5">
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wide font-medium mb-0.5">
-                Custo
-              </p>
-              <p className="text-sm font-semibold text-foreground">{formatCurrency(produto.custo)}</p>
-            </div>
-            <div className="bg-brand-muted rounded-lg p-2.5">
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wide font-medium mb-0.5">
-                Preço
-              </p>
-              <p className="text-sm font-semibold text-brand">{formatCurrency(produto.preco_venda)}</p>
-            </div>
-          </div>
-
-          {/* Margin row */}
-          <div className="flex items-center justify-between text-xs">
-            <div className="flex items-center gap-1.5 text-muted-foreground">
-              <TrendingUp className="w-3.5 h-3.5 text-brand" />
-              <span>
-                Lucro unitário:{' '}
-                <span className="font-semibold text-foreground">{formatCurrency(lucro)}</span>
-              </span>
-            </div>
-            <Badge
-              variant={margem >= 30 ? 'success' : margem >= 15 ? 'warning' : 'destructive'}
-              size="sm"
-            >
-              {formatPercent(margem)}
-            </Badge>
-          </div>
-
-          {/* Stock indicator */}
-          <div className="flex items-center justify-between">
-            <StockBadge estoque={produto.estoque} />
-            {(produto.total_vendido ?? 0) > 0 && (
-              <span className="text-xs text-muted-foreground">
-                {produto.total_vendido} vendidos
-              </span>
-            )}
-          </div>
-        </CardContent>
-
-        <CardFooter className="flex gap-2 pt-3 border-t border-border">
-          <Button
-            variant="brand"
-            size="sm"
-            className="flex-1 gap-1.5 text-xs"
-            onClick={() => onVenda(produto)}
-            disabled={produto.estoque === 0}
+          <span
+            className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider"
+            style={{ background: `${margemColor}18`, color: margemColor, border: `1px solid ${margemColor}30` }}
           >
-            <ShoppingCart className="w-3.5 h-3.5" />
-            Venda Rápida
-          </Button>
-          <Button
-            variant="outline"
-            size="icon-sm"
-            onClick={() => onEdit(produto)}
-            title="Editar produto"
+            {margem.toFixed(0)}%
+          </span>
+        </div>
+
+        {/* Stock + sold */}
+        <div className="flex items-center justify-between pt-1"
+          style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+          <span
+            className="text-[10px] font-bold uppercase tracking-wider"
+            style={{
+              color: semEstoque ? '#ef4444' : baixo ? '#f59e0b' : GOLD_D + '0.7)',
+            }}
           >
-            <Edit2 className="w-3.5 h-3.5" />
-          </Button>
-          <Button
-            variant={confirmDelete ? 'destructive' : 'ghost'}
-            size="icon-sm"
-            onClick={handleDelete}
-            loading={deleting}
-            title={confirmDelete ? 'Clique novamente para confirmar' : 'Excluir produto'}
-            className={confirmDelete ? '' : 'text-muted-foreground hover:text-destructive'}
-          >
-            {!deleting && <Trash2 className="w-3.5 h-3.5" />}
-          </Button>
-        </CardFooter>
-      </Card>
+            {semEstoque ? '⚠ Esgotado' : baixo ? `⚠ ${produto.estoque} un.` : `${produto.estoque} un.`}
+          </span>
+          {(produto.total_vendido ?? 0) > 0 && (
+            <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.25)' }}>
+              {produto.total_vendido} vendidos
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Footer actions */}
+      <div className="flex gap-2 px-4 pb-4 pt-0">
+        <motion.button
+          onClick={() => !semEstoque && onVenda(produto)}
+          whileHover={semEstoque ? {} : { scale: 1.02, y: -1 }}
+          whileTap={semEstoque ? {} : { scale: 0.97 }}
+          transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+          disabled={semEstoque}
+          className="flex-1 flex items-center justify-center gap-1.5 h-9 rounded-xl text-[11px] font-black uppercase tracking-wider transition-opacity"
+          style={{
+            background: semEstoque
+              ? 'rgba(255,255,255,0.04)'
+              : `linear-gradient(135deg, ${GOLD} 0%, #f5c842 50%, ${GOLD} 100%)`,
+            color: semEstoque ? 'rgba(255,255,255,0.2)' : '#080c14',
+            boxShadow: semEstoque ? 'none' : `0 4px 14px ${GOLD_D}0.3)`,
+            cursor: semEstoque ? 'not-allowed' : 'pointer',
+          }}
+        >
+          <Plus className="w-3 h-3" />
+          Relatar Venda
+        </motion.button>
+
+        <motion.button
+          onClick={() => onEdit(produto)}
+          whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.92 }}
+          transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+          className="w-9 h-9 rounded-xl flex items-center justify-center"
+          style={{
+            background: 'rgba(255,255,255,0.04)',
+            border: '1px solid rgba(255,255,255,0.08)',
+            color: 'rgba(255,255,255,0.5)',
+          }}
+          title="Editar produto"
+        >
+          <Edit2 className="w-3.5 h-3.5" />
+        </motion.button>
+
+        <motion.button
+          onClick={handleDelete}
+          whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.92 }}
+          transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+          disabled={deleting}
+          className="w-9 h-9 rounded-xl flex items-center justify-center transition-colors"
+          style={confirmDelete
+            ? { background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.35)', color: '#ef4444' }
+            : { background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.35)' }
+          }
+          title={confirmDelete ? 'Confirmar exclusão?' : 'Excluir produto'}
+        >
+          {deleting
+            ? <motion.div animate={{ rotate: 360 }} transition={{ duration: 0.8, repeat: Infinity, ease: 'linear' }}
+                className="w-3 h-3 rounded-full border-2 border-current border-t-transparent" />
+            : <Trash2 className="w-3.5 h-3.5" />
+          }
+        </motion.button>
+      </div>
     </motion.div>
   )
 }
