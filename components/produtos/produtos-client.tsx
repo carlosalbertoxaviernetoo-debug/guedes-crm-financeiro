@@ -310,7 +310,7 @@ export function ProdutosClient({ initialProdutos }: ProdutosClientProps) {
 
       {/* ── FAB ── */}
       <motion.div
-        style={{ position: 'fixed', bottom: 24, right: 24, zIndex: 40 }}
+        className="fixed right-6 z-40 bottom-[88px] lg:bottom-6"
         initial={{ scale: 0, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ delay: 0.3, type: 'spring', stiffness: 300, damping: 20 }}

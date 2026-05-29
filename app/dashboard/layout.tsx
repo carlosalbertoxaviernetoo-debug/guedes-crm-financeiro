@@ -40,7 +40,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {/* Desktop-only header (hidden on mobile via lg:flex inside) */}
         <Header onMenuClick={() => setMobileSidebarOpen(true)} />
 
-        <main className="flex-1 overflow-y-auto p-4 md:p-6 pb-20 lg:pb-6">
+        <main className="flex-1 overflow-y-auto p-4 md:p-6 pb-[100px] lg:pb-6">
           {children}
         </main>
       </div>

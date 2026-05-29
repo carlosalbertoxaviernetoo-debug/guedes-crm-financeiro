@@ -596,11 +596,11 @@ export function AnotacoesClient({ initialAnotacoes }: AnotacoesClientProps) {
 
       {/* ── FAB mobile ─────────────────────────────────────── */}
       <motion.button
+        className="fixed right-5 z-40 bottom-[88px] lg:bottom-6"
         whileHover={{ scale: 1.08, boxShadow: `0 8px 28px ${GOLD_D}0.4)` }}
         whileTap={{ scale: 0.92 }}
         onClick={openCreate}
         style={{
-          position: 'fixed', bottom: 24, right: 20, zIndex: 40,
           width: 52, height: 52, borderRadius: '50%',
           background: `linear-gradient(135deg, ${GOLD}, #f5c842)`,
           border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center',
