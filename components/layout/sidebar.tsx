@@ -7,7 +7,7 @@ import Image from 'next/image'
 import {
   LayoutDashboard, Package, Users,
   Target, History, Settings, LogOut,
-  ChevronLeft, ChevronRight,
+  ChevronLeft, ChevronRight, StickyNote,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { logoutAction } from '@/lib/actions/auth'
@@ -20,6 +20,7 @@ const NAV_ITEMS = [
   { href: '/dashboard/clientes',      label: 'Clientes',      icon: Users           },
   { href: '/dashboard/metas',         label: 'Metas',         icon: Target          },
   { href: '/dashboard/historico',     label: 'Histórico',     icon: History         },
+  { href: '/dashboard/anotacoes',     label: 'Anotações',     icon: StickyNote      },
   { href: '/dashboard/configuracoes', label: 'Configurações', icon: Settings        },
 ]
 

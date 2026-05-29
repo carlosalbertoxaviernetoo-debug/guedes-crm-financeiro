@@ -155,6 +155,19 @@ export interface DashboardMetrics {
   evolucao_mensal: { mes: string; faturamento: number; lucro: number }[]
 }
 
+export type AnotacaoTipo = 'observacao' | 'produto' | 'investimento' | 'ideia' | 'tarefa' | 'outro'
+
+export interface Anotacao {
+  id: string
+  titulo: string
+  conteudo: string
+  tipo: AnotacaoTipo
+  created_at: string
+  updated_at: string
+}
+
+export type AnotacaoForm = Pick<Anotacao, 'titulo' | 'conteudo' | 'tipo'>
+
 export type ProdutoForm = Omit<Produto, 'id' | 'created_at' | 'updated_at' | 'margem' | 'lucro_unitario'>
 export type ClienteForm = Omit<Cliente, 'id' | 'created_at' | 'total_compras' | 'total_gasto' | 'ultima_compra'>
 export type VendaForm = {
